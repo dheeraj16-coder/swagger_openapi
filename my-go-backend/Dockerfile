@@ -1,16 +1,21 @@
-FROM golang:1.19 AS build
-WORKDIR /go/src
-COPY go ./go
-COPY main.go .
-COPY go.sum .
-COPY go.mod .
+FROM golang:1.24.5-alpine AS builder
+WORKDIR /src
+RUN apk add --no-cache git
 
-ENV CGO_ENABLED=0
+# copy backend module files (from repo root)
+COPY my-go-backend/go.mod my-go-backend/go.sum ./
+# copy local client module
+COPY restcountries-go-client /src/restcountries-go-client
+# copy backend source
+COPY my-go-backend /src/my-go-backend
 
-RUN go build -o openapi .
+WORKDIR /src/my-go-backend
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go mod tidy
+RUN go build -o /app/server .
 
-FROM scratch AS runtime
-ENV GIN_MODE=release
-COPY --from=build /go/src/openapi ./
-EXPOSE 8080/tcp
-ENTRYPOINT ["./openapi"]
+FROM alpine:3.18
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /app/server /usr/local/bin/server
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/server"]

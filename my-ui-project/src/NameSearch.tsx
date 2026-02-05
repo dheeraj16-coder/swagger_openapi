@@ -43,7 +43,7 @@ function NameSearch() {
     capitalInfo: false,
     coatOfArms: false,
   });
-  const apiClient = new CountriesApi(new Configuration({ basePath: 'http://localhost:8080/v3.1' }));
+  const apiClient = new CountriesApi(new Configuration({ basePath: '/v3.1' }));
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = event.target;
