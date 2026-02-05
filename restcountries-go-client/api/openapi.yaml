@@ -1,0 +1,728 @@
+openapi: 3.0.0
+info:
+  description: This is an  OpenAPI specification for Rest Countries API.
+  title: OpenAPI Example
+  version: 1.0.0
+servers:
+- url: https://restcountries.com/v3.1
+tags:
+- description: API for retrieving country information
+  name: Countries
+paths:
+  /all:
+    get:
+      description: Returns a simple example response.
+      operationId: getAllCountries
+      parameters:
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: true
+        schema:
+          items:
+            example: name
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response
+      summary: GET endpoint for retrieving all countries
+      tags:
+      - Countries
+  /independent:
+    description: Returns a list of independent countries
+    get:
+      operationId: getIndependentCountries
+      parameters:
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: name
+            type: string
+          type: array
+        style: simple
+      - description: Status of the countries to filter by
+        explode: true
+        in: query
+        name: status
+        required: true
+        schema:
+          example: false
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response
+      summary: Get independent countries
+      tags:
+      - Countries
+  /name/{name}:
+    get:
+      operationId: getCountryByName
+      parameters:
+      - description: The name of the country to search for
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          example: United States of America
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      - description: Whether to perform a full-text search
+        explode: true
+        in: query
+        name: fullText
+        required: false
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: "Search by country name. If you want to get an exact match, use the\
+        \ next endpoint. It can be the common or official value"
+      tags:
+      - Countries
+  /alpha/{code}:
+    get:
+      operationId: getCountryByCode
+      parameters:
+      - description: "The country code to search ,for example for moldova 2-letter\
+          \ code i.e cca2  = MD, 3-letter code i.e cca3 and cioc= MDA, numeric code\
+          \  i.e ccn3=498"
+        explode: false
+        in: path
+        name: code
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by country code. It can be the 2-letter or 3-letter code
+      tags:
+      - Countries
+  /currency/{currency}:
+    get:
+      operationId: getCountryByCurrency
+      parameters:
+      - description: The currency code to search for
+        explode: false
+        in: path
+        name: currency
+        required: true
+        schema:
+          example: USD
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by currency code
+      tags:
+      - Countries
+  /lang/{language}:
+    get:
+      operationId: getCountryByLanguage
+      parameters:
+      - description: The language code to search for
+        explode: false
+        in: path
+        name: language
+        required: true
+        schema:
+          example: en
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by language code
+      tags:
+      - Countries
+  /capital/{capital}:
+    get:
+      operationId: getCountryByCapital
+      parameters:
+      - description: The capital city name to search for
+        explode: false
+        in: path
+        name: capital
+        required: true
+        schema:
+          example: "Washington, D.C."
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by capital city name
+      tags:
+      - Countries
+  /region/{region}:
+    get:
+      operationId: getCountryByRegion
+      parameters:
+      - description: The region name to search for
+        explode: false
+        in: path
+        name: region
+        required: true
+        schema:
+          example: Americas
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by region name
+      tags:
+      - Countries
+  /subregion/{subregion}:
+    get:
+      operationId: getCountryBySubregion
+      parameters:
+      - description: The subregion name to search for
+        explode: false
+        in: path
+        name: subregion
+        required: true
+        schema:
+          example: Northern America
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by subregion name
+      tags:
+      - Countries
+  /translation/{translation}:
+    get:
+      operationId: getCountryByTranslation
+      parameters:
+      - description: The translation name to search for
+        explode: false
+        in: path
+        name: translation
+        required: true
+        schema:
+          example: Estados Unidos
+          type: string
+        style: simple
+      - description: Comma-separated list of fields to include in the response for
+          filtering
+        explode: false
+        in: query
+        name: fields
+        required: false
+        schema:
+          items:
+            example: "name,capital,area,population,flags"
+            type: string
+          type: array
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allresponsebody"
+          description: Successful response with country details
+      summary: Search by translation name
+      tags:
+      - Countries
+components:
+  schemas:
+    Allresponsebody:
+      items:
+        $ref: "#/components/schemas/Allresponsebody_inner"
+      type: array
+    NativeNameDetail:
+      example:
+        common: common
+        official: official
+      properties:
+        official:
+          type: string
+        common:
+          type: string
+      type: object
+    CurrenciesDetails:
+      example:
+        symbol: $
+        name: United States Dollar
+      properties:
+        name:
+          example: United States Dollar
+          type: string
+        symbol:
+          example: $
+          type: string
+      type: object
+    demonymsDetails:
+      example:
+        f: American
+        m: American
+      properties:
+        f:
+          example: American
+          type: string
+        m:
+          example: American
+          type: string
+      type: object
+    NameDetails:
+      example:
+        nativeName:
+          key:
+            common: common
+            official: official
+        common: United States of America
+        official: United States of America
+      properties:
+        common:
+          example: United States of America
+          type: string
+        official:
+          example: United States of America
+          type: string
+        nativeName:
+          additionalProperties:
+            $ref: "#/components/schemas/NativeNameDetail"
+          type: object
+      type: object
+    CarDetails:
+      example:
+        side: right
+        signs:
+        - USA
+        - USA
+      properties:
+        signs:
+          items:
+            example: USA
+            type: string
+          type: array
+        side:
+          example: right
+          type: string
+      type: object
+    ImageDetails:
+      properties:
+        png:
+          example: https://restcountries.com/data/usa-coat.png
+          type: string
+        svg:
+          example: https://restcountries.com/data/usa-coat.svg
+          type: string
+        alt:
+          example: Coat of Arms of the United States of America
+          type: string
+      required:
+      - png
+      - svg
+      type: object
+    ArrayOfStrings:
+      items:
+        type: string
+      type: array
+    LatlingDetails:
+      items:
+        example: 38.8833
+        type: number
+      type: array
+    MapsDetails:
+      example:
+        openStreetMaps: https://www.openstreetmap.org/relation/123456
+        googleMaps: https://www.google.com/maps/place/United+States+of+America
+      properties:
+        googleMaps:
+          example: https://www.google.com/maps/place/United+States+of+America
+          type: string
+        openStreetMaps:
+          example: https://www.openstreetmap.org/relation/123456
+          type: string
+      type: object
+    IddDetails:
+      example:
+        suffixes:
+        - "202"
+        - "202"
+        root: "+1"
+      properties:
+        root:
+          example: "+1"
+          type: string
+        suffixes:
+          items:
+            description: Area codes for the United States
+            example: "202"
+            type: string
+          type: array
+      type: object
+    PostalCodeDetails:
+      example:
+        regex: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
+        format: "#####-####"
+      properties:
+        format:
+          example: "#####-####"
+          type: string
+        regex:
+          example: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
+          type: string
+      type: object
+    Allresponsebody_inner_flags:
+      allOf:
+      - $ref: "#/components/schemas/ImageDetails"
+      - required:
+        - alt
+        type: object
+      example:
+        svg: https://restcountries.com/data/usa-coat.svg
+        png: https://restcountries.com/data/usa-coat.png
+        alt: Coat of Arms of the United States of America
+    Allresponsebody_inner_capitalInfo:
+      example:
+        latlng:
+        - 38.8833
+        - 38.8833
+      properties:
+        latlng:
+          items:
+            example: 38.8833
+            type: number
+          type: array
+      type: object
+    Allresponsebody_inner:
+      example:
+        capital:
+        - capital
+        - capital
+        flag: https://restcountries.com/data/usa.png
+        independent: true
+        landlocked: false
+        borders:
+        - borders
+        - borders
+        postalCode:
+          regex: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
+          format: "#####-####"
+        flags:
+          svg: https://restcountries.com/data/usa-coat.svg
+          png: https://restcountries.com/data/usa-coat.png
+          alt: Coat of Arms of the United States of America
+        capitalInfo:
+          latlng:
+          - 38.8833
+          - 38.8833
+        ccn3: "840"
+        coatOfArms: ""
+        demonyms:
+          key:
+            f: American
+            m: American
+        fifa: USA
+        cioc: USA
+        car:
+          side: right
+          signs:
+          - USA
+          - USA
+        translations:
+          key:
+            common: common
+            official: official
+        altSpellings:
+        - altSpellings
+        - altSpellings
+        area: 9833517
+        maps:
+          openStreetMaps: https://www.openstreetmap.org/relation/123456
+          googleMaps: https://www.google.com/maps/place/United+States+of+America
+        languages:
+          key: English
+        subregion: Northern America
+        idd:
+          suffixes:
+          - "202"
+          - "202"
+          root: "+1"
+        tld:
+        - tld
+        - tld
+        unMember: true
+        gini:
+          key: 41.4
+        continents:
+        - continents
+        - continents
+        population: 331002651
+        startOfWeek: monday
+        timezones:
+        - timezones
+        - timezones
+        name:
+          nativeName:
+            key:
+              common: common
+              official: official
+          common: United States of America
+          official: United States of America
+        cca3: USA
+        region: Americas
+        latlng:
+        - 38.8833
+        - 38.8833
+        cca2: USA
+        currencies:
+          key:
+            symbol: $
+            name: United States Dollar
+        status: officially-assigned
+      properties:
+        name:
+          $ref: "#/components/schemas/NameDetails"
+        tld:
+          items:
+            type: string
+          type: array
+        cca2:
+          example: USA
+          type: string
+        cca3:
+          example: USA
+          type: string
+        ccn3:
+          example: "840"
+          type: string
+        cioc:
+          example: USA
+          type: string
+        currencies:
+          additionalProperties:
+            $ref: "#/components/schemas/CurrenciesDetails"
+          type: object
+        region:
+          example: Americas
+          type: string
+        independent:
+          example: true
+          type: boolean
+        unMember:
+          example: true
+          type: boolean
+        capital:
+          items:
+            type: string
+          type: array
+        latlng:
+          items:
+            example: 38.8833
+            type: number
+          type: array
+        area:
+          example: 9833517
+          type: number
+        population:
+          example: 331002651
+          type: number
+        flags:
+          $ref: "#/components/schemas/Allresponsebody_inner_flags"
+        flag:
+          example: https://restcountries.com/data/usa.png
+          type: string
+        landlocked:
+          example: false
+          type: boolean
+        borders:
+          items:
+            type: string
+          type: array
+        translations:
+          additionalProperties:
+            $ref: "#/components/schemas/NativeNameDetail"
+          type: object
+        demonyms:
+          additionalProperties:
+            $ref: "#/components/schemas/demonymsDetails"
+          type: object
+        timezones:
+          items:
+            type: string
+          type: array
+        continents:
+          items:
+            type: string
+          type: array
+        fifa:
+          example: USA
+          type: string
+        car:
+          $ref: "#/components/schemas/CarDetails"
+        coatOfArms:
+          allOf:
+          - $ref: "#/components/schemas/ImageDetails"
+        startOfWeek:
+          example: monday
+          type: string
+        capitalInfo:
+          $ref: "#/components/schemas/Allresponsebody_inner_capitalInfo"
+        maps:
+          $ref: "#/components/schemas/MapsDetails"
+        gini:
+          additionalProperties:
+            example: 41.4
+            type: number
+          type: object
+        status:
+          example: officially-assigned
+          type: string
+        subregion:
+          example: Northern America
+          type: string
+        altSpellings:
+          items:
+            type: string
+          type: array
+        idd:
+          $ref: "#/components/schemas/IddDetails"
+        postalCode:
+          $ref: "#/components/schemas/PostalCodeDetails"
+        languages:
+          additionalProperties:
+            example: English
+            type: string
+          type: object
+      type: object

@@ -1,0 +1,596 @@
+openapi: 3.0.0
+info:
+  title: OpenAPI Example
+  version: 1.0.0
+  description: This is an  OpenAPI specification for Rest Countries API.
+tags:
+  - name: Countries
+    description: API for retrieving country information
+servers:
+  - url: https://restcountries.com/v3.1
+
+
+paths:
+  /all:
+    get:
+      tags:
+        - Countries
+      summary: GET endpoint for retrieving all countries
+      description: Returns a simple example response.
+      operationId: getAllCountries
+      parameters:
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              example: name
+          style: simple
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+  
+  /independent:
+     
+      description: Returns a list of independent countries
+      get:
+        tags:
+          - Countries
+        summary: Get independent countries
+        operationId: getIndependentCountries
+        parameters:
+
+          - name: fields
+            description: Comma-separated list of fields to include in the response for filtering
+            in: query
+            required: false
+            schema:
+              type: array
+              items:
+                type: string
+                example: name
+            style: simple
+
+          - name: status
+            description: Status of the countries to filter by
+            in: query
+            required: true
+            schema:
+              type: boolean
+              example: "true/false"
+
+        responses:
+            '200':
+              description: Successful response
+              content:
+               application/json:
+                 schema:
+                   $ref: '#/components/schemas/Allresponsebody'
+
+  /name/{name}:
+    get:
+      tags:
+        - Countries
+      summary: Search by country name. If you want to get an exact match, use the next endpoint. It can be the common or official value
+      operationId: getCountryByName
+      parameters:
+
+        - name: name
+          in: path
+          required: true
+          description: The name of the country to search for
+          schema:
+            type: string
+            example: "United States of America"
+     
+
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              example: name,capital,area,population,flags
+          style: simple
+
+        - name: fullText
+          in : query
+          description: Whether to perform a full-text search 
+          schema:
+            type: boolean
+
+      responses:
+        '200':
+          description: Successful response with country details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+  
+  /alpha/{code}:
+      get:
+        tags:
+          - Countries
+        summary: Search by country code. It can be the 2-letter or 3-letter code
+        operationId: getCountryByCode
+        parameters:
+
+          - name: code
+            in: path
+            required: true
+            description: The country code to search ,for example for moldova 2-letter code i.e cca2  = MD, 3-letter code i.e cca3 and cioc= MDA, numeric code  i.e ccn3=498
+            schema:
+              type: string
+
+          - name: fields
+            description: Comma-separated list of fields to include in the response for filtering
+            in: query
+            required: false
+            schema:
+              type: array
+              items:
+                type: string
+                example: name,capital,area,population,flags
+            style: simple
+
+        responses:
+          '200':
+            description: Successful response with country details
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Allresponsebody'
+
+  /currency/{currency}:
+    get:
+      tags:
+        - Countries
+      summary: Search by currency code
+      operationId: getCountryByCurrency
+      parameters:
+
+        - name: currency
+          in: path
+          required: true
+          description: The currency code to search for
+          schema:
+            type: string
+            example: "USD"
+
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              example: name,capital,area,population,flags
+          style: simple
+
+      responses:
+        '200':
+          description: Successful response with country details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+
+  /lang/{language}:
+    get:
+      tags:
+        - Countries
+      summary: Search by language code
+      operationId: getCountryByLanguage
+      parameters:
+
+        - name: language
+          in: path
+          required: true
+          description: The language code to search for
+          schema:
+            type: string
+            example: "en"
+
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              example: name,capital,area,population,flags
+          style: simple
+
+      responses:
+        '200':
+          description: Successful response with country details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+ 
+  /capital/{capital}:
+    get:
+      tags:
+        - Countries
+      summary: Search by capital city name
+      operationId: getCountryByCapital
+      parameters:
+
+        - name: capital
+          in: path
+          required: true
+          description: The capital city name to search for
+          schema:
+            type: string
+            example: "Washington, D.C."
+
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              example: name,capital,area,population,flags
+          style: simple
+
+      responses:
+        '200':
+          description: Successful response with country details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+    
+  /region/{region}:
+      get:
+        tags:
+          - Countries
+        summary: Search by region name
+        operationId: getCountryByRegion
+        parameters:
+
+          - name: region
+            in: path
+            required: true
+            description: The region name to search for
+            schema:
+              type: string
+              example: "Americas"
+
+          - name: fields
+            description: Comma-separated list of fields to include in the response for filtering
+            in: query
+            required: false
+            schema:
+              type: array
+              items:
+                type: string
+                example: name,capital,area,population,flags
+            style: simple
+
+        responses:
+          '200':
+            description: Successful response with country details
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Allresponsebody'
+  
+  /subregion/{subregion}:
+    get:
+      tags:
+        - Countries
+      summary: Search by subregion name
+      operationId: getCountryBySubregion
+      parameters:     
+         
+        - name: subregion
+          in: path
+          required: true
+          description: The subregion name to search for
+          schema:
+            type: string
+            example: "Northern America"
+
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              example: name,capital,area,population,flags
+          style: simple
+
+      responses:
+        '200':
+          description: Successful response with country details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+  
+  /translation/{translation}:
+    get:
+      tags:
+        - Countries
+      summary: Search by translation name
+      operationId: getCountryByTranslation
+      parameters:
+
+        - name: translation
+          in: path
+          required: true
+          description: The translation name to search for
+          schema:
+            type: string
+            example: "Estados Unidos"
+
+        - name: fields
+          description: Comma-separated list of fields to include in the response for filtering
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              example: name,capital,area,population,flags
+          style: simple
+
+      responses:
+        '200':
+          description: Successful response with country details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allresponsebody'
+    
+components:
+  schemas:
+    Allresponsebody:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            $ref: '#/components/schemas/NameDetails'
+          tld:
+            $ref: '#/components/schemas/ArrayOfStrings'
+            example: "[.us]"
+          cca2:
+            type: string
+            example: "USA"
+          cca3:
+            type: string
+            example: "USA"
+          ccn3:
+            type: string
+            example: "840"
+          cioc:
+            type: string
+            example: "USA"  
+          currencies:
+            type: object  
+            additionalProperties:
+              $ref: '#/components/schemas/CurrenciesDetails'
+          region:
+            type: string
+            example: "Americas"
+          independent:
+            type: boolean
+            example: true
+          unMember:
+            type: boolean
+            example: true
+          capital:
+              $ref: '#/components/schemas/ArrayOfStrings'
+              example: "Washington, D.C."
+          latlng:
+              $ref: '#/components/schemas/LatlingDetails'
+              example: [38.8833, -77.0167]
+          area: 
+            type: number
+            example: 9833517
+          population:
+            type: number
+            example: 331002651
+          flags:    
+            allOf:
+            - $ref: '#/components/schemas/ImageDetails'
+            - type: object
+              required:
+                  - alt
+          flag:
+            type: string
+            example: "https://restcountries.com/data/usa.png"
+          landlocked:
+            type: boolean
+            example: false
+          borders:
+              $ref: '#/components/schemas/ArrayOfStrings'
+              example: "CAN"
+          translations:
+            type: object
+            additionalProperties:
+              $ref: '#/components/schemas/NativeNameDetail'
+            
+          demonyms:
+            type: object
+            additionalProperties:
+              $ref: '#/components/schemas/demonymsDetails'
+          timezones:
+              $ref: '#/components/schemas/ArrayOfStrings'
+              example: "UTC-05:00"
+          continents:
+              $ref: '#/components/schemas/ArrayOfStrings'
+              example: "North America"
+          fifa:
+            type: string
+            example: "USA"
+          car:
+            $ref: '#/components/schemas/CarDetails'
+          coatOfArms:
+            allOf:
+              - $ref: '#/components/schemas/ImageDetails'
+          startOfWeek:
+            type: string
+            example: "monday"
+          capitalInfo:
+            type: object
+            properties:
+              latlng:
+                $ref: '#/components/schemas/LatlingDetails'
+          maps:
+            $ref: '#/components/schemas/MapsDetails'
+          gini:
+            type: object
+            additionalProperties:
+                type: number
+                example: 41.4
+          status:
+            type: string
+            example: "officially-assigned"
+          subregion:
+            type: string
+            example: "Northern America"
+          altSpellings:
+            $ref: '#/components/schemas/ArrayOfStrings'
+            example: ["USA", "United States", "United States of America"]
+          idd:
+            $ref: '#/components/schemas/IddDetails'
+          postalCode:
+              $ref: '#/components/schemas/PostalCodeDetails'
+          languages:
+            type: object
+            additionalProperties:
+              type: string
+              example: "English"
+              
+    NativeNameDetail:
+      type: object
+      properties:
+        official:
+          type: string
+        common:
+          type: string
+    
+    CurrenciesDetails:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "United States Dollar"
+        symbol:
+          type: string
+          example: "$"
+    
+    demonymsDetails:
+      type: object
+      properties:
+        f:
+          type: string
+          example: "American"
+        m:
+          type: string
+          example: "American"
+
+    NameDetails:
+       type: object
+       properties:
+          common:
+            type: string
+            example: "United States of America"
+          official:
+            type: string
+            example: "United States of America"
+          nativeName:
+            type: object
+            additionalProperties:
+                $ref: '#/components/schemas/NativeNameDetail'
+    
+    CarDetails:
+        type: object
+        properties:
+          signs:
+            type: array
+            items:
+              type: string
+              example: "USA"
+          side:
+              type: string
+              example: "right"
+
+    ImageDetails:
+        type: object
+        properties:
+           png:
+            type: string
+            example: "https://restcountries.com/data/usa-coat.png"        
+           svg:
+            type: string
+            example: "https://restcountries.com/data/usa-coat.svg"
+           alt: 
+            type: string
+            example: "Coat of Arms of the United States of America" 
+        required:
+          - png
+          - svg
+
+    ArrayOfStrings:
+      type: array
+      items:
+        type: string
+
+    LatlingDetails:
+      type: array
+      items:
+        type: number
+        example: 38.8833
+    
+    MapsDetails:
+      type: object
+      properties:
+        googleMaps:
+          type: string
+          example: "https://www.google.com/maps/place/United+States+of+America"
+        openStreetMaps:
+          type: string
+          example: "https://www.openstreetmap.org/relation/123456"
+
+    IddDetails:
+      type: object
+      properties:
+        root:
+          type: string
+          example: "+1"
+        suffixes:
+          type: array
+          items:
+            type: string
+            example: "202"
+            description: "Area codes for the United States"
+
+    PostalCodeDetails:
+      type: object
+      properties:
+        format:
+          type: string
+          example: "#####-####"
+        regex:
+          type: string
+          example: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
