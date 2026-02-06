@@ -13,6 +13,9 @@ import (
 	restcountries "restcountries"
 	"strings"
 
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -234,4 +237,23 @@ func (api *CountriesAPI) GetIndependentCountries(c *gin.Context) {
 		return
 	}
 	c.JSON(200, countries)
+}
+
+func HealthCheck(c *gin.Context) {
+	// Check if external API is reachable
+	_, err := http.Get("https://restcountries.com/v3.1/alpha/us")
+
+	if err != nil {
+		c.JSON(503, gin.H{
+			"status":    "unhealthy",
+			"reason":    "cannot reach restcountries API",
+			"timestamp": time.Now().UTC().Format(time.RFC3339),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"status":    "healthy",
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+	})
 }
