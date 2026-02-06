@@ -1,0 +1,223 @@
+/* Header - LinkedIn Cover Style */
+.header {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.4)), 
+                radial-gradient(ellipse at center, #1a237e 0%, #000428 100%);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-theme="dark"] .header {
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), 
+                radial-gradient(ellipse at center, #0d1b3e 0%, #000000 100%);
+}
+
+/* Starry night effect */
+.header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, white, transparent),
+        radial-gradient(2px 2px at 60px 70px, white, transparent),
+        radial-gradient(1px 1px at 50px 50px, white, transparent),
+        radial-gradient(1px 1px at 130px 80px, white, transparent),
+        radial-gradient(2px 2px at 90px 10px, white, transparent),
+        radial-gradient(1px 1px at 200px 50px, white, transparent),
+        radial-gradient(1px 1px at 150px 120px, white, transparent),
+        radial-gradient(2px 2px at 250px 90px, white, transparent);
+    background-repeat: repeat;
+    background-size: 300px 200px;
+    opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+}
+
+[data-theme="dark"] .header::before {
+    opacity: 0.5;
+}
+
+/* Earth glow effect */
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(100, 150, 255, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Theme Toggle as Logo */
+.theme-toggle-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.9), rgba(90, 200, 250, 0.9));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.theme-toggle-logo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.theme-toggle-logo svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Theme Toggle - Sun/Moon Morph */
+.themeToggle {
+    color: #FFE082;
+}
+
+[data-theme="dark"] .themeToggle {
+    color: #E3F2FD;
+}
+
+.st-sunMoonThemeToggleBtn {
+    position: relative;
+    cursor: pointer;
+}
+
+.st-sunMoonThemeToggleBtn .themeToggleInput {
+    opacity: 0;
+    width: 100%;
+    aspect-ratio: 1;
+    cursor: pointer;
+}
+
+.st-sunMoonThemeToggleBtn svg {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.4s ease;
+    transform: rotate(40deg);
+}
+
+.st-sunMoonThemeToggleBtn svg .sunMoon {
+    transform-origin: center center;
+    transition: inherit;
+    transform: scale(1);
+}
+
+.st-sunMoonThemeToggleBtn svg .sunRay {
+    transform-origin: center center;
+    transform: scale(0);
+}
+
+.st-sunMoonThemeToggleBtn svg mask > circle {
+    transition: transform 0.64s cubic-bezier(0.41, 0.64, 0.32, 1.575);
+    transform: translate(0px, 0px);
+}
+
+.st-sunMoonThemeToggleBtn svg .sunRay2 { animation-delay: 0.05s !important; }
+.st-sunMoonThemeToggleBtn svg .sunRay3 { animation-delay: 0.1s !important; }
+.st-sunMoonThemeToggleBtn svg .sunRay4 { animation-delay: 0.17s !important; }
+.st-sunMoonThemeToggleBtn svg .sunRay5 { animation-delay: 0.25s !important; }
+.st-sunMoonThemeToggleBtn svg .sunRay6 { animation-delay: 0.29s !important; }
+
+.st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg {
+    transform: rotate(90deg);
+}
+
+.st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg mask > circle {
+    transform: translate(16px, -3px);
+}
+
+.st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg .sunMoon {
+    transform: scale(0.55);
+}
+
+.st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg .sunRay {
+    animation: showRay1832 0.4s ease 0s 1 forwards;
+}
+
+@keyframes showRay1832 {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+
+.logo-text h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.logo-text p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header {
+        padding: 2rem 1rem;
+        min-height: 150px;
+    }
+
+    .header::after {
+        width: 250px;
+        height: 250px;
+    }
+
+    .theme-toggle-logo {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+    }
+
+    .theme-toggle-logo svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .logo-text h1 {
+        font-size: 1.75rem;
+    }
+
+    .logo-text p {
+        font-size: 0.95rem;
+    }
+}
