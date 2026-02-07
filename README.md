@@ -286,7 +286,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Dheeraj Sai**
 
 - GitHub: [@dheeraj16-coder](https://github.com/dheeraj16-coder)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/your-profile)
+- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/dheerajsai16)
 
 ---
 
