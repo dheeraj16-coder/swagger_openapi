@@ -11,19 +11,54 @@ package main
 
 import (
 	"log"
+	"my-go-backend/middleware"
 
-	// WARNING!
-	// Pass --git-repo-id and --git-user-id properties when generating the code
-	//
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"golang.org/x/time/rate"
+
 	sw "my-go-backend/go"
 )
 
 func main() {
 	routes := sw.ApiHandleFunctions{}
 
-	log.Printf("Server started")
+	log.Printf("Server started with rate limiting and Prometheus metrics")
 
-	router := sw.NewRouter(routes)
+	// Create gin engine FIRST (don't use NewRouter yet)
+	router := gin.Default()
+
+	// Rate Limiting Configuration
+	// 10 requests per second per IP, with burst of 20
+	rateLimiter := middleware.NewIPRateLimiter(rate.Limit(10), 20)
+
+	// Apply Middlewares BEFORE registering routes
+	router.Use(middleware.PrometheusMiddleware())              // Track all requests
+	router.Use(middleware.RateLimitMiddleware(rateLimiter))    // Rate limit per IP
+
+	// CORS headers (for frontend)
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
+
+	// NOW register routes with the middleware-enabled router
+	sw.NewRouterWithGinEngine(router, routes)
+
+	// Prometheus metrics endpoint
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	log.Printf("Rate limiting: 10 req/sec per IP, burst of 20")
+	log.Printf("Metrics available at: http://localhost:8080/metrics")
+	log.Printf("Listening on :8080")
 
 	log.Fatal(router.Run(":8080"))
 }
