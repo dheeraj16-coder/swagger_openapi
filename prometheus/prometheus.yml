@@ -4,4 +4,13 @@ global:
 scrape_configs:
   - job_name: "local-backend"
     static_configs:
-      - targets: ["backend:8080"]   # ← service name : CONTAINER port
+      - targets: ["backend:8080"]
+
+remote_write:
+  - url: https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-8d9350e4-3cab-418d-8237-e234caf1d31f/api/v1/remote_write
+    sigv4:
+      region: us-east-1
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500
