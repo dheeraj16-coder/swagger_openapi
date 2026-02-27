@@ -17,7 +17,7 @@ type Cache struct {
 }
 
 func NewCache(ttl time.Duration) *Cache {
-	redisAddr := os.Getenv("REDIS_ADDR")
+	redisAddr := os.Getenv("REDIS_URL")
 	if redisAddr == "" {
 		redisAddr = "redis:6379" // default docker-compose service name
 	}
