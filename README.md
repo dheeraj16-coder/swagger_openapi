@@ -184,21 +184,6 @@ CI/CD: GitHub Actions → ECR → App Runner
 
 The Grafana dashboard at **http://54.242.201.196:3000** shows real production metrics:
 
-<p align="center">
-  <img src="images/grafana-overview.png" alt="Grafana Dashboard - Normal Traffic" width="90%"/>
-  <br><em>Normal traffic patterns with comprehensive metrics tracking</em>
-</p>
-
-<p align="center">
-  <img src="images/grafana-attack.png" alt="Grafana Dashboard - DoS Attack Blocked" width="90%"/>
-  <br><em>Live DoS attack detection - 6,616 malicious requests blocked in real-time</em>
-</p>
-
-<p align="center">
-  <img src="images/vegeta-test.png" alt="Load Test Results" width="90%"/>
-  <br><em>Vegeta load test - Rate limiter blocking 94% of excessive traffic</em>
-</p>
-
 **Dashboard Features:**
 - Total requests (last 5 min)
 - Rate limit blocks over time
