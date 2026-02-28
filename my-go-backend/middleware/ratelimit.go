@@ -1,94 +1,101 @@
 package middleware
 
 import (
+	"context"
+	"fmt"
 	"net/http"
-	"sync"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/time/rate"
+	"github.com/redis/go-redis/v9"
 )
 
-// IPRateLimiter manages rate limiters for each IP address
-type IPRateLimiter struct {
-	ips map[string]*rate.Limiter
-	mu  *sync.RWMutex
-	r   rate.Limit // requests per second
-	b   int        // burst size
+// RedisRateLimiter uses Redis for distributed rate limiting
+// Works correctly across multiple App Runner instances
+type RedisRateLimiter struct {
+	client     *redis.Client
+	ctx        context.Context
+	limit      int // max requests
+	windowSecs int // time window in seconds
 }
 
-// NewIPRateLimiter creates a new IP-based rate limiter
-// r: requests per second allowed
-// b: burst size (max requests in a burst)
-func NewIPRateLimiter(r rate.Limit, b int) *IPRateLimiter {
-	i := &IPRateLimiter{
-		ips: make(map[string]*rate.Limiter),
-		mu:  &sync.RWMutex{},
-		r:   r,
-		b:   b,
+// NewRedisRateLimiter creates a Redis-backed rate limiter
+// limit: max requests per window
+// windowSecs: time window in seconds
+func NewRedisRateLimiter(limit, windowSecs int) *RedisRateLimiter {
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		redisURL = "redis://redis:6379"
 	}
 
-	// Cleanup old IPs every 5 minutes to prevent memory leak
-	go i.cleanupRoutine()
-
-	return i
-}
-
-// AddIP creates a new rate limiter for an IP
-func (i *IPRateLimiter) AddIP(ip string) *rate.Limiter {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
-	limiter := rate.NewLimiter(i.r, i.b)
-	i.ips[ip] = limiter
-
-	return limiter
-}
-
-// GetLimiter returns the rate limiter for the given IP
-func (i *IPRateLimiter) GetLimiter(ip string) *rate.Limiter {
-	i.mu.Lock()
-	limiter, exists := i.ips[ip]
-
-	if !exists {
-		i.mu.Unlock()
-		return i.AddIP(ip)
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		panic(fmt.Sprintf("invalid REDIS_URL for rate limiter: %v", err))
 	}
 
-	i.mu.Unlock()
-	return limiter
-}
+	client := redis.NewClient(opt)
+	ctx := context.Background()
 
-// cleanupRoutine removes old limiters to prevent memory leaks
-func (i *IPRateLimiter) cleanupRoutine() {
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
+	if err := client.Ping(ctx).Err(); err != nil {
+		panic(fmt.Sprintf("rate limiter cannot connect to Redis: %v", err))
+	}
 
-	for range ticker.C {
-		i.mu.Lock()
-		// Clear all limiters (they'll be recreated on next request)
-		i.ips = make(map[string]*rate.Limiter)
-		i.mu.Unlock()
+	return &RedisRateLimiter{
+		client:     client,
+		ctx:        ctx,
+		limit:      limit,
+		windowSecs: windowSecs,
 	}
 }
 
-// RateLimitMiddleware creates a Gin middleware for rate limiting
-func RateLimitMiddleware(limiter *IPRateLimiter) gin.HandlerFunc {
+// Allow checks if the IP is allowed to make a request
+// Uses Redis INCR + EXPIRE for atomic sliding window
+func (r *RedisRateLimiter) Allow(ip string) (bool, int) {
+	key := fmt.Sprintf("ratelimit:%s", ip)
+
+	// Atomic increment
+	count, err := r.client.Incr(r.ctx, key).Result()
+	if err != nil {
+		// If Redis fails, allow request (fail open)
+		return true, 0
+	}
+
+	// Set expiry only on first request in window
+	if count == 1 {
+		r.client.Expire(r.ctx, key, time.Duration(r.windowSecs)*time.Second)
+	}
+
+	remaining := r.limit - int(count)
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	return count <= int64(r.limit), remaining
+}
+
+// RateLimitMiddleware creates a Gin middleware using Redis
+func RateLimitMiddleware(limiter *RedisRateLimiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
 
-		// Get rate limiter for this IP
-		ipLimiter := limiter.GetLimiter(ip)
+		allowed, remaining := limiter.Allow(ip)
 
-		if !ipLimiter.Allow() {
-			// Rate limit exceeded - block request
-			// Record in Prometheus metrics
+		// Add rate limit headers
+		c.Header("X-RateLimit-Limit", strconv.Itoa(limiter.limit))
+		c.Header("X-RateLimit-Remaining", strconv.Itoa(remaining))
+		c.Header("X-RateLimit-Window", strconv.Itoa(limiter.windowSecs)+"s")
+
+		if !allowed {
 			RecordRateLimitBlock(ip, c.FullPath())
-
 			c.JSON(http.StatusTooManyRequests, gin.H{
-				"error":   "Rate limit exceeded",
-				"message": "Too many requests. Please try again later.",
-				"ip":      ip,
+				"error":     "Rate limit exceeded",
+				"message":   "Too many requests. Please try again later.",
+				"ip":        ip,
+				"limit":     limiter.limit,
+				"window":    fmt.Sprintf("%ds", limiter.windowSecs),
+				"remaining": 0,
 			})
 			c.Abort()
 			return
