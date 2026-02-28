@@ -17,9 +17,11 @@ extensions:
   sigv4auth:
     region: "us-east-1"
     service: "aps"
+  health_check:
+    endpoint: "localhost:13133"
 
 service:
-  extensions: [sigv4auth]
+  extensions: [sigv4auth, health_check]
   pipelines:
     metrics:
       receivers: [prometheus]
