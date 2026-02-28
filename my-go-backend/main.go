@@ -16,15 +16,14 @@ func main() {
 
 	router := gin.Default()
 
-	// Redis-based distributed rate limiter
-	// 100 requests per 60 seconds per IP (shared across all instances)
+	
 	rateLimiter := middleware.NewRedisRateLimiter(100, 60)
 
-	// Apply Middlewares
+	
 	router.Use(middleware.PrometheusMiddleware())
 	router.Use(middleware.RateLimitMiddleware(rateLimiter))
 
-	// CORS
+	
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

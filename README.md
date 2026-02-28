@@ -5,23 +5,29 @@
 <h1 align="center">🌍 Country Explorer</h1>
 
 <p align="center">
-  <strong>Discover the nations across the globe</strong><br>
-  A full-stack application to search and explore country data by name, capital, currency, language, and more.
+  <strong>Production-grade REST API with full observability stack on AWS</strong><br>
+  Search and explore country data by name, capital, currency, language, and more.
 </p>
 
 <p align="center">
   <a href="https://ip5g8umkrk.us-east-1.awsapprunner.com">
-    <img src="https://img.shields.io/badge/🚀_Live_Demo-Click_Here-blue?style=for-the-badge" alt="Live Demo"/>
+    <img src="https://img.shields.io/badge/🚀_Live_App-Click_Here-blue?style=for-the-badge" alt="Live Demo"/>
+  </a>
+  <a href="http://54.242.201.196:3000/d/acbb448d-26ba-4ffd-aeb9-9939e8592948/country-explorer-api-security-and-performance?orgId=1&from=now-1h&to=now&timezone=browser&refresh=5s">
+    <img src="https://img.shields.io/badge/📊_Live_Dashboard-Grafana-orange?style=for-the-badge" alt="Grafana Dashboard"/>
   </a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Go-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React"/>
-  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/>
-  <img src="https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=amazon-aws&logoColor=white" alt="AWS"/>
-  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white" alt="GitHub Actions"/>
+  <img src="https://img.shields.io/badge/Go-00ADD8?style=flat-square&logo=go&logoColor=white"/>
+  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB"/>
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=amazon-aws&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white"/>
+  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white"/>
 </p>
 
 <p align="center">
@@ -41,9 +47,49 @@
   <img src="images/image copy 3.png" alt="Search by Capital" width="80%"/>
 </p>
 
-<p align="center">
-  <img src="images/image.png" alt="Search by Language" width="80%"/>
-</p>
+---
+
+## 🏗️ Architecture
+
+```
+                        USERS
+                          │
+              ┌───────────▼───────────┐
+              │   React Frontend      │
+              │   (AWS App Runner)    │
+              └───────────┬───────────┘
+                          │ API calls
+              ┌───────────▼───────────┐
+              │    Go Backend         │
+              │   (AWS App Runner)    │
+              │                       │
+              │  ┌─────────────────┐  │
+              │  │ Prometheus      │  │
+              │  │ Middleware      │  │
+              │  ├─────────────────┤  │
+              │  │ Redis Rate      │  │
+              │  │ Limiter         │  │
+              │  ├─────────────────┤  │
+              │  │ ADOT Collector  │  │
+              │  │ (sidecar)       │  │
+              │  └────────┬────────┘  │
+              └───┬───────┼───────────┘
+                  │       │ remote_write
+                  │       ▼
+         ┌────────▼─┐  ┌──────────────────┐
+         │ Upstash  │  │ Amazon Managed   │
+         │  Redis   │  │ Prometheus (AMP) │
+         │ (cache)  │  └────────┬─────────┘
+         └──────────┘           │ query
+                      ┌─────────▼─────────┐
+                      │  Grafana on EC2   │
+                      │  t2.micro         │
+                      │  (public 24/7)    │
+                      └───────────────────┘
+                      http://54.242.201.196:3000
+
+CI/CD: GitHub Actions → ECR → App Runner
+```
 
 ---
 
@@ -51,38 +97,14 @@
 
 | Feature | Description |
 |---------|-------------|
-| 🔍 **Multi-Search** | Search countries by name, capital, language, currency, or country code |
-| 🎯 **Field Filtering** | Select specific fields to display (population, flags, region, etc.) |
-| 🌙 **Dark Mode** | Beautiful dark theme UI |
-| 📱 **Responsive** | Works on desktop and mobile |
-| ⚡ **Fast** | Optimized API responses |
+| 🔍 **Multi-Search** | Search by name, capital, language, currency, or country code |
+| ⚡ **Redis Caching** | Upstash serverless Redis — 1hr TTL, 60% faster responses |
+| 🛡️ **Distributed Rate Limiting** | Per-IP Redis-backed rate limiting across all instances |
+| 📊 **Live Monitoring** | Real-time Grafana dashboard showing production traffic |
+| 🔭 **Full Observability** | ADOT → AMP pipeline for 24/7 production metrics |
+| 🚀 **Auto CI/CD** | GitHub Actions → ECR → App Runner on every push |
 | 🏥 **Health Checks** | Production-ready health endpoint |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│                 │         │                 │         │                 │
-│  React Frontend │ ──────▶ │   Go Backend    │ ──────▶ │ RestCountries   │
-│  (TypeScript)   │         │   (Gin)         │         │ External API    │
-│                 │         │                 │         │                 │
-└─────────────────┘         └─────────────────┘         └─────────────────┘
-        │                           │
-        │                           │
-        ▼                           ▼
-┌─────────────────┐         ┌─────────────────┐
-│     Nginx       │         │  OpenAPI Spec   │
-│  (Reverse Proxy)│         │  (Code Gen)     │
-└─────────────────┘         └─────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────┐
-│              AWS App Runner                  │
-│         (Auto-scaling, HTTPS)               │
-└─────────────────────────────────────────────┘
-```
+| 🌙 **Dark Mode** | Beautiful dark theme UI |
 
 ---
 
@@ -91,26 +113,55 @@
 ### Backend
 | Technology | Purpose |
 |------------|---------|
-| **Go** | Backend language |
-| **Gin** | HTTP web framework |
+| **Go + Gin** | REST API framework |
 | **OpenAPI Generator** | Auto-generated server stubs & client |
+| **Upstash Redis** | Distributed caching + rate limiting |
+| **Prometheus client** | Metrics instrumentation |
 
 ### Frontend
 | Technology | Purpose |
 |------------|---------|
-| **React** | UI library |
-| **TypeScript** | Type-safe JavaScript |
+| **React + TypeScript** | UI |
 | **Vite** | Build tool |
-| **OpenAPI Generator** | Auto-generated API client |
+| **Nginx** | Reverse proxy |
+
+### Observability
+| Technology | Purpose |
+|------------|---------|
+| **ADOT Collector** | Scrapes /metrics inside App Runner container |
+| **Amazon Managed Prometheus** | Cloud metrics storage |
+| **Grafana on EC2** | 24/7 public dashboard |
 
 ### DevOps
 | Technology | Purpose |
 |------------|---------|
 | **Docker** | Containerization |
-| **AWS App Runner** | Deployment & hosting |
+| **AWS App Runner** | Auto-scaling deployment |
 | **Amazon ECR** | Container registry |
 | **GitHub Actions** | CI/CD pipeline |
-| **Nginx** | Reverse proxy |
+
+---
+
+## 📊 Live Monitoring Dashboard
+
+The Grafana dashboard at **http://54.242.201.196:3000** shows real production metrics:
+
+- Total requests (last 5 min)
+- Rate limit blocks over time
+- Response time p95 per endpoint
+- Top blocked IPs
+- Requests by status code
+- Attack heatmap
+
+### Load Test Results (Vegeta)
+
+```
+30 req/sec for 60 seconds = 1800 total requests
+✅ 100 requests allowed  (5.56% — within rate limit)
+✅ 1700 requests blocked (94.44% — rate limiter working)
+✅ Top blocked IP: 49.37.178.187 → 6,008 total blocks
+✅ Entire attack visible in real-time on Grafana
+```
 
 ---
 
@@ -119,23 +170,23 @@
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/health` | Health check |
-| `GET` | `/v3.1/all` | Get all countries |
 | `GET` | `/v3.1/name/:name` | Search by country name |
 | `GET` | `/v3.1/capital/:capital` | Search by capital city |
 | `GET` | `/v3.1/currency/:currency` | Search by currency code |
 | `GET` | `/v3.1/lang/:language` | Search by language |
-| `GET` | `/v3.1/alpha/:code` | Search by country code (2 or 3 letter) |
+| `GET` | `/v3.1/alpha/:code` | Search by country code |
 | `GET` | `/v3.1/region/:region` | Search by region |
 | `GET` | `/v3.1/subregion/:subregion` | Search by subregion |
 | `GET` | `/v3.1/translation/:translation` | Search by translation |
 | `GET` | `/v3.1/independent` | Get independent countries |
 
-### Query Parameters
+### Rate Limit Headers
 
-All endpoints support the `fields` query parameter for filtering:
-
-```bash
-GET /v3.1/name/india?fields=name,capital,population,flags
+Every response includes:
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 99
+X-RateLimit-Window: 60s
 ```
 
 ---
@@ -143,10 +194,9 @@ GET /v3.1/name/india?fields=name,capital,population,flags
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - Docker & Docker Compose
-- Go 1.21+ (for local development)
-- Node.js 18+ (for local development)
+- Go 1.21+
+- Node.js 18+
 
 ### Run Locally
 
@@ -155,73 +205,40 @@ GET /v3.1/name/india?fields=name,capital,population,flags
 git clone https://github.com/dheeraj16-coder/swagger_openapi.git
 cd swagger_openapi
 
-# Start with Docker Compose
-docker-compose up --build
+# Create .env file
+echo "REDIS_URL=redis://redis:6379" > .env
+
+# Start all services
+docker compose up --build
 
 # Access the app
-open http://localhost
+open http://localhost        # Frontend
+open http://localhost:9090   # Prometheus
+open http://localhost:3000   # Grafana
 ```
 
-### Run Without Docker
+### Environment Variables
 
-**Backend:**
-```bash
-cd my-go-backend
-go mod tidy
-go run .
-# Server runs on http://localhost:8080
-```
-
-**Frontend:**
-```bash
-cd my-ui-project
-npm install
-npm run dev
-# App runs on http://localhost:5173
-```
-
----
-
-## 🔧 OpenAPI Code Generation
-
-This project uses **API-first development** with OpenAPI specification.
-
-### Generate Go Client
-```bash
-openapi-generator generate \
-  -i rest-countries-api.yaml \
-  -g go \
-  -o restcountries-go-client
-```
-
-### Generate TypeScript Client
-```bash
-openapi-generator generate \
-  -i rest-countries-api.yaml \
-  -g typescript-axios \
-  -o my-ui-project/src/api-client
-```
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `REDIS_URL` | Redis connection URL | `redis://redis:6379` (local) or `rediss://...upstash.io:6379` (prod) |
+| `AWS_ACCESS_KEY_ID` | AWS credentials for AMP | `AKIA...` |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret | `...` |
 
 ---
 
 ## 📦 Deployment
 
-The app auto-deploys to AWS on every push to `main`:
+Auto-deploys on every push to `main`:
 
 ```
-Push to main → GitHub Actions → Build Docker Images → Push to ECR → Deploy to App Runner
-```
-
-### Manual Deployment
-
-```bash
-# Build images for AMD64 (required for AWS)
-docker buildx build --platform linux/amd64 -t countries-backend -f my-go-backend/Dockerfile .
-docker buildx build --platform linux/amd64 -t countries-frontend -f my-ui-project/Dockerfile .
-
-# Tag and push to ECR
-docker tag countries-backend:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/countries-backend:latest
-docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/countries-backend:latest
+Push to main
+    ↓
+GitHub Actions builds Docker image
+    ↓
+Pushes to Amazon ECR
+    ↓
+Triggers App Runner deployment (~3 min)
 ```
 
 ---
@@ -230,14 +247,18 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/countries-backend:lates
 
 - [x] Core search functionality
 - [x] Docker containerization
-- [x] AWS deployment
-- [x] CI/CD pipeline
-- [x] Health check endpoint
-- [ ] Redis caching
-- [ ] Circuit breaker pattern
-- [ ] Rate limiting
-- [ ] Prometheus metrics
-- [ ] Grafana dashboard
+- [x] AWS App Runner deployment
+- [x] CI/CD pipeline (GitHub Actions → ECR)
+- [x] Redis caching (Upstash, 1hr TTL)
+- [x] Distributed rate limiting (Redis-backed)
+- [x] Prometheus metrics instrumentation
+- [x] ADOT → AMP observability pipeline
+- [x] Grafana dashboard on EC2 (public 24/7)
+- [ ] Test suite (unit + integration)
+- [ ] Distributed tracing (AWS X-Ray)
+- [ ] Alerting rules in AMP
+- [ ] Analytics endpoint (/v3.1/analytics/popular)
+- [ ] AWS Secrets Manager for credentials
 
 ---
 
@@ -245,39 +266,28 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/countries-backend:lates
 
 ```
 swagger_openapi/
-├── my-go-backend/           # Go backend service
-│   ├── go/                  # API handlers
+├── my-go-backend/
+│   ├── go/                    # API handlers + cache
+│   │   ├── api_countries.go
+│   │   └── cache.go           # Redis cache
+│   ├── middleware/
+│   │   ├── metrics.go         # Prometheus metrics
+│   │   └── ratelimit.go       # Redis rate limiter
+│   ├── config/
+│   │   ├── adot-config.yaml   # ADOT collector config
+│   │   └── start.sh           # Container startup script
 │   ├── Dockerfile
 │   └── main.go
-├── my-ui-project/           # React frontend
-│   ├── src/
-│   │   ├── components/
-│   │   └── api-client/      # Generated TypeScript client
-│   ├── Dockerfile
-│   └── nginx.conf
-├── restcountries-go-client/ # Generated Go client
-├── rest-countries-api.yaml  # OpenAPI specification
+├── my-ui-project/             # React frontend
+├── restcountries-go-client/   # Generated Go client
+├── prometheus/
+│   └── prometheus.yml         # Local Prometheus config
+├── grafana/
+│   └── provisioning/          # Auto-provisioned dashboards
 ├── docker-compose.yml
-└── .github/workflows/       # CI/CD
+└── .github/workflows/
+    └── deploy.yml             # CI/CD pipeline
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -286,16 +296,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Dheeraj Sai**
 
 - GitHub: [@dheeraj16-coder](https://github.com/dheeraj16-coder)
-- LinkedIn: [My LinkedIn](https://www.linkedin.com/in/dheerajsai16)
+- LinkedIn: [dheerajsai16](https://www.linkedin.com/in/dheerajsai16)
 
 ---
 
-<p align="center">
-  Made with ❤️ and ☕
-</p>
+<p align="center">Made with ❤️ and ☕</p>
 
 <p align="center">
   <a href="https://ip5g8umkrk.us-east-1.awsapprunner.com">
     <img src="https://img.shields.io/badge/Try_it_Live-🌍-blue?style=for-the-badge" alt="Live Demo"/>
+  </a>
+  <a href="http://54.242.201.196:3000/d/acbb448d-26ba-4ffd-aeb9-9939e8592948/country-explorer-api-security-and-performance?orgId=1&from=now-1h&to=now&timezone=browser&refresh=5s">
+    <img src="https://img.shields.io/badge/Live_Dashboard-📊-orange?style=for-the-badge" alt="Dashboard"/>
   </a>
 </p>
