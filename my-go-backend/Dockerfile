@@ -9,24 +9,22 @@ ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 RUN go mod tidy
 RUN go build -o /app/server .
 
-FROM alpine:3.18
-RUN apk add --no-cache ca-certificates curl
+# Get ADOT binary from official AWS image
+FROM public.ecr.aws/aws-observability/aws-otel-collector:latest AS adot
 
-# Download ADOT collector binary
-RUN curl -L https://github.com/aws-observability/aws-otel-collector/releases/latest/download/aws-otel-collector-linux-amd64 \
-    -o /usr/local/bin/aws-otel-collector && \
-    chmod +x /usr/local/bin/aws-otel-collector
+FROM alpine:3.18
+RUN apk add --no-cache ca-certificates
+
+# Copy ADOT collector from official image
+COPY --from=adot /awscollector /usr/local/bin/aws-otel-collector
 
 # Copy Go binary
 COPY --from=builder /app/server /usr/local/bin/server
 
-# Copy ADOT config
+# Copy configs
 COPY my-go-backend/config/adot-config.yaml /etc/adot/config.yaml
-
-# Copy startup script
 COPY my-go-backend/config/start.sh /start.sh
 RUN chmod +x /start.sh
 
 EXPOSE 8080
-
 ENTRYPOINT ["/start.sh"]
