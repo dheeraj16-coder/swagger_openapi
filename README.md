@@ -49,44 +49,6 @@
 
 ---
 
-## 📊 Live Grafana Dashboard
-
-Our production monitoring dashboard shows real-time metrics from AWS:
-
-### Dashboard Overview
-<p align="center">
-  <img src="images/grafana-overview.png" alt="Grafana Dashboard Overview" width="90%"/>
-  <br><em>Real-time traffic monitoring with 111 requests and 0 blocks in the last 5 minutes</em>
-</p>
-
-### Rate Limiting in Action
-<p align="center">
-  <img src="images/grafana-normal-traffic.png" alt="Normal Traffic Patterns" width="90%"/>
-  <br><em>Healthy traffic patterns - mostly 200 responses with rate limiting ready to trigger</em>
-</p>
-
-### Attack Detection & Blocking
-<p align="center">
-  <img src="images/grafana-attack-detected.png" alt="DoS Attack Blocked" width="90%"/>
-  <br><em>Under attack: 6,665 requests with 6,616 blocks - rate limiter stopping 99% of malicious traffic</em>
-</p>
-
-### Load Test Results (Vegeta)
-<p align="center">
-  <img src="images/vegeta-load-test.png" alt="Load Test Terminal Output" width="90%"/>
-  <br><em>30 req/sec attack simulation: 200 success, 429 rate limited - security working as designed</em>
-</p>
-
-**Key Metrics Tracked:**
-- Total requests per endpoint
-- Rate limit blocks by IP
-- Response time percentiles (p95, p99)
-- Active connections
-- Top blocked IPs
-- Attack heatmaps
-
----
-
 ## 🏗️ Architecture
 
 ```
@@ -128,6 +90,29 @@ Our production monitoring dashboard shows real-time metrics from AWS:
 
 CI/CD: GitHub Actions → ECR → App Runner
 ```
+
+### Rate Limiting in Action
+<p align="center">
+  <img src="images/grafana-normal-traffic.png" alt="Normal Traffic Patterns" width="90%"/>
+  <br><em>Healthy traffic patterns - mostly 200 responses with rate limiting ready to trigger</em>
+</p>
+
+### Attack Detection & Blocking
+<p align="center">
+  <img src="images/grafana-attack-detected.png" alt="DoS Attack Blocked" width="90%"/>
+  <br><em>Under attack: 6,665 requests with 6,616 blocks - rate limiter stopping 99% of malicious traffic</em>
+</p>
+
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Multi-Search** | Search by name, capital, language, currency, or country code |
+| ⚡ **Redis Caching** | Upstash serverless Redis — 1hr TTL, 60% faster responses |
+| 🛡️ **Distributed Rate Limiting** | Per-IP Redis-backed rate limiting across all instances |
+| 📊 **Live Monitoring** | Real-time Grafana dashboard showing production traffic |
+| 🔭 **Full Observability** | ADOT → AMP pipeline for 24/7 production metrics |
+| 🚀 **Auto CI/CD** | GitHub Actions → ECR → App Runner on every push |
+| 🏥 **Health Checks** | Production-ready health endpoint |
+| 🌙 **Dark Mode** | Beautiful dark theme UI |
 
 ---
 
@@ -184,7 +169,6 @@ CI/CD: GitHub Actions → ECR → App Runner
 
 The Grafana dashboard at **http://54.242.201.196:3000** shows real production metrics:
 
-**Dashboard Features:**
 - Total requests (last 5 min)
 - Rate limit blocks over time
 - Response time p95 per endpoint
