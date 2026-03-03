@@ -91,6 +91,29 @@
 CI/CD: GitHub Actions → ECR → App Runner
 ```
 
+### Rate Limiting in Action
+<p align="center">
+  <img src="images/grafana-normal-traffic.png" alt="Normal Traffic Patterns" width="90%"/>
+  <br><em>Healthy traffic patterns - mostly 200 responses with rate limiting ready to trigger</em>
+</p>
+
+### Attack Detection & Blocking
+<p align="center">
+  <img src="images/grafana-attack-detected.png" alt="DoS Attack Blocked" width="90%"/>
+  <br><em>Under attack: 6,665 requests with 6,616 blocks - rate limiter stopping 99% of malicious traffic</em>
+</p>
+
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Multi-Search** | Search by name, capital, language, currency, or country code |
+| ⚡ **Redis Caching** | Upstash serverless Redis — 1hr TTL, 60% faster responses |
+| 🛡️ **Distributed Rate Limiting** | Per-IP Redis-backed rate limiting across all instances |
+| 📊 **Live Monitoring** | Real-time Grafana dashboard showing production traffic |
+| 🔭 **Full Observability** | ADOT → AMP pipeline for 24/7 production metrics |
+| 🚀 **Auto CI/CD** | GitHub Actions → ECR → App Runner on every push |
+| 🏥 **Health Checks** | Production-ready health endpoint |
+| 🌙 **Dark Mode** | Beautiful dark theme UI |
+
 ---
 
 ## ✨ Features
@@ -179,6 +202,7 @@ The Grafana dashboard at **http://54.242.201.196:3000** shows real production me
 | `GET` | `/v3.1/subregion/:subregion` | Search by subregion |
 | `GET` | `/v3.1/translation/:translation` | Search by translation |
 | `GET` | `/v3.1/independent` | Get independent countries |
+| `GET` | `/metrics` | Prometheus metrics endpoint |
 
 ### Rate Limit Headers
 
@@ -291,12 +315,17 @@ swagger_openapi/
 
 ---
 
-## 👤 Author
+## 👥 Authors
 
-**Dheeraj Sai**
-
+**Dheeraj Sai** - _Project Lead, Infrastructure & DevOps_
 - GitHub: [@dheeraj16-coder](https://github.com/dheeraj16-coder)
 - LinkedIn: [dheerajsai16](https://www.linkedin.com/in/dheerajsai16)
+- Contributions: Architecture design, Redis integration, ADOT/AMP pipeline, Grafana EC2 deployment, CI/CD setup
+
+**Tejas Shivaprasad** - _Backend Security & Observability_
+- GitHub: [@TejaShiv](https://github.com/TejaShiv)
+- LinkedIn: [tejas-shivaprasad](https://www.linkedin.com/in/tejas-shivaprasad)
+- Contributions: Rate limiting middleware, Prometheus metrics instrumentation, DoS protection implementation, Grafana dashboard design
 
 ---
 
