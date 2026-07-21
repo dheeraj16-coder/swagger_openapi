@@ -25,11 +25,6 @@ type CountriesAPI struct {
 func NewCountriesAPI() CountriesAPI {
 	cfg := restcountries.NewConfiguration()
 	key := os.Getenv("RESTCOUNTRIES_API_KEY")
-	suffix := key
-	if len(key) > 4 {
-		suffix = key[len(key)-4:]
-	}
-	log.Printf("[startup] API key loaded: length=%d suffix=%q", len(key), suffix)
 	cfg.AddDefaultHeader("Authorization", "Bearer "+key)
 	return CountriesAPI{
 		client: restcountries.NewAPIClient(cfg),
