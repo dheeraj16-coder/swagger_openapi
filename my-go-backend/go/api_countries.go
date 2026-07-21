@@ -139,7 +139,7 @@ func (api CountriesAPI) GetCountryByLanguage(c *gin.Context) {
 	}
 	// Substring search on the language name ("English", "Spanish"),
 	// matching what the UI placeholder suggests users type.
-	req := api.client.DefaultAPI.SearchCountriesByProperty(c.Request.Context(), "languages.name").Q(language)
+	req := api.client.DefaultAPI.SearchCountriesByProperty(c.Request.Context(), "languages").Q(language)
 	if fields != "" {
 		req = req.ResponseFields(fields)
 	}
