@@ -21,6 +21,17 @@ type RedisRateLimiter struct {
 	windowSecs int // time window in seconds
 }
 
+// skipRateLimitPaths are infrastructure endpoints that must NEVER be rate
+// limited: they're polled by trusted internal systems (Prometheus/ADOT
+// scraping /metrics, load balancers and AWS health checks hitting /health)
+// on a tight timer. Rate limiting them (a) wastes a Redis INCR+EXPIRE on
+// every poll, and (b) eventually 429s the poller, breaking metrics and
+// health reporting. These must short-circuit BEFORE the Redis call.
+var skipRateLimitPaths = map[string]bool{
+	"/metrics": true,
+	"/health":  true,
+}
+
 // NewRedisRateLimiter creates a Redis-backed rate limiter
 // limit: max requests per window
 // windowSecs: time window in seconds
@@ -78,6 +89,14 @@ func (r *RedisRateLimiter) Allow(ip string) (bool, int) {
 // RateLimitMiddleware creates a Gin middleware using Redis
 func RateLimitMiddleware(limiter *RedisRateLimiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Infrastructure endpoints bypass rate limiting entirely — no Redis
+		// touch, no counter, no 429. Checked before anything else so internal
+		// pollers never consume quota or get blocked.
+		if skipRateLimitPaths[c.FullPath()] {
+			c.Next()
+			return
+		}
+
 		ip := c.ClientIP()
 
 		allowed, remaining := limiter.Allow(ip)

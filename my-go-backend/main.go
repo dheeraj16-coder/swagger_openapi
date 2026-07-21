@@ -6,24 +6,26 @@ import (
 	"my-go-backend/middleware"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
-	routes := sw.ApiHandleFunctions{}
+	_ = godotenv.Load()
+
+	routes := sw.ApiHandleFunctions{
+		CountriesAPI: sw.NewCountriesAPI(),
+	}
 
 	log.Printf("Server started with rate limiting and Prometheus metrics")
 
 	router := gin.Default()
 
-	
 	rateLimiter := middleware.NewRedisRateLimiter(100, 60)
 
-	
 	router.Use(middleware.PrometheusMiddleware())
 	router.Use(middleware.RateLimitMiddleware(rateLimiter))
 
-	
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

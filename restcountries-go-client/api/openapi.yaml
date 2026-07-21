@@ -1,106 +1,78 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  description: This is an  OpenAPI specification for Rest Countries API.
-  title: OpenAPI Example
-  version: 1.0.0
+  contact:
+    url: https://restcountries.com/support
+  description: |
+    Read-only country data API. All endpoints are GET, JSON-only, and follow a JSON:API-like envelope: successful payloads sit under a top-level `data` key with `data.objects` (array of Country records) and `data.meta` (pagination block). Failures return an `errors` array of objects carrying a `message`. Authentication is a bearer API key. Spec written against https://restcountries.com/docs/countries (July 2026) and cross-checked against a live v5 record.
+  title: REST Countries — Countries API (v5)
+  version: 5.0.0
 servers:
-- url: https://restcountries.com/v3.1
-tags:
-- description: API for retrieving country information
-  name: Countries
+- url: https://api.restcountries.com/countries/v5
+security:
+- bearerAuth: []
 paths:
-  /all:
+  /:
     get:
-      description: Returns a simple example response.
-      operationId: getAllCountries
+      description: |
+        Returns a paginated list of all countries, sorted ascending by names.common. `q` free-text searches every searchable property (substring, case-insensitive). Arbitrary searchable properties may also be supplied as extra query parameters (e.g. `region=Europe`, `memberships.eu=1`); all clauses AND together. Those dynamic property filters cannot be modeled in OpenAPI 3.0 — pass them via the generated client's raw query-parameter escape hatch if needed.
+      operationId: listCountries
       parameters:
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: true
-        schema:
-          items:
-            example: name
-            type: string
-          type: array
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response
-      summary: GET endpoint for retrieving all countries
-      tags:
-      - Countries
-  /independent:
-    description: Returns a list of independent countries
-    get:
-      operationId: getIndependentCountries
-      parameters:
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: name
-            type: string
-          type: array
-        style: simple
-      - description: Status of the countries to filter by
+      - description: Free-text substring search across searchable properties. Explicitly
+          empty `q` returns 400.
         explode: true
         in: query
-        name: status
-        required: true
+        name: q
+        required: false
         schema:
-          example: false
-          type: boolean
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response
-      summary: Get independent countries
-      tags:
-      - Countries
-  /name/{name}:
-    get:
-      operationId: getCountryByName
-      parameters:
-      - description: The name of the country to search for
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          example: United States of America
           type: string
-        style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
-      - description: Whether to perform a full-text search
+        style: form
+      - description: Page size. 1–100 on the free plan (up to 500 on paid plans).
+          Defaults to 25.
         explode: true
         in: query
-        name: fullText
+        name: limit
+        required: false
+        schema:
+          default: 25
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: Records to skip before returning. Out-of-bounds offsets return
+          an empty objects array with status 200.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: |
+          Comma-separated allowlist of dot-path properties to include in each returned object; when set, objects carry only those keys.
+        example: "names.common,codes.alpha_2,flag.emoji"
+        explode: true
+        in: query
+        name: response_fields
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Comma-separated blocklist of dot-path properties to drop from each returned object. Composes with response_fields; omit wins on conflict.
+        example: names.translations
+        explode: true
+        in: query
+        name: response_fields_omit
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Pretty-print the JSON response. Bare flag or truthy values enable.
+        explode: true
+        in: query
+        name: pretty
         required: false
         schema:
           type: boolean
@@ -110,619 +82,2137 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: "Search by country name. If you want to get an exact match, use the\
-        \ next endpoint. It can be the common or official value"
-      tags:
-      - Countries
-  /alpha/{code}:
+                $ref: "#/components/schemas/CountryListResponse"
+          description: Paginated country records.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Malformed request (empty q, out-of-range limit, or other validation\
+            \ failure)."
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Missing, unrecognized, revoked, or expired API key."
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Account frozen (monthly limit exceeded) or premium field used
+            on the free plan.
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Edge rate limiter tripped (sustained traffic above 20 requests
+            per 10 seconds).
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Unhandled server error.
+      summary: "List all countries (paginated), optionally narrowed by free-text search\
+        \ and property filters"
+  /{property}:
     get:
-      operationId: getCountryByCode
+      description: |
+        Substring search (case-insensitive) within one searchable property, e.g. `/names.common?q=ger`. If `{property}` is a named aggregate (`name` or `code`), the search fans out across that aggregate's underlying property list. Empty `q` returns 400; a non-existent or non-searchable property returns 404. Premium properties (e.g. `leaders`) return 403 on the free plan.
+      operationId: searchCountriesByProperty
       parameters:
-      - description: "The country code to search ,for example for moldova 2-letter\
-          \ code i.e cca2  = MD, 3-letter code i.e cca3 and cioc= MDA, numeric code\
-          \  i.e ccn3=498"
+      - description: |
+          A searchable property dot-path (e.g. `names.common`, `capitals`, `currencies`) or an aggregate name (`name`, `code`).
+        example: names.common
         explode: false
         in: path
-        name: code
+        name: property
         required: true
         schema:
           type: string
         style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
+      - description: "Search term (substring, case-insensitive). Required; empty returns\
+          \ 400."
+        explode: true
         in: query
-        name: fields
+        name: q
+        required: true
+        schema:
+          minLength: 1
+          type: string
+        style: form
+      - description: Page size. 1–100 on the free plan (up to 500 on paid plans).
+          Defaults to 25.
+        explode: true
+        in: query
+        name: limit
         required: false
         schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
+          default: 25
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: Records to skip before returning. Out-of-bounds offsets return
+          an empty objects array with status 200.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: |
+          Comma-separated allowlist of dot-path properties to include in each returned object; when set, objects carry only those keys.
+        example: "names.common,codes.alpha_2,flag.emoji"
+        explode: true
+        in: query
+        name: response_fields
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Comma-separated blocklist of dot-path properties to drop from each returned object. Composes with response_fields; omit wins on conflict.
+        example: names.translations
+        explode: true
+        in: query
+        name: response_fields_omit
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Pretty-print the JSON response. Bare flag or truthy values enable.
+        explode: true
+        in: query
+        name: pretty
+        required: false
+        schema:
+          type: boolean
+        style: form
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by country code. It can be the 2-letter or 3-letter code
-      tags:
-      - Countries
-  /currency/{currency}:
+                $ref: "#/components/schemas/CountryListResponse"
+          description: Countries whose property contains the search term.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Malformed request (empty q, out-of-range limit, or other validation\
+            \ failure)."
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Missing, unrecognized, revoked, or expired API key."
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Account frozen (monthly limit exceeded) or premium field used
+            on the free plan.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Unknown endpoint, or the property/aggregate is not readable/searchable."
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Edge rate limiter tripped (sustained traffic above 20 requests
+            per 10 seconds).
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Unhandled server error.
+      summary: Substring search within a single searchable property or a named aggregate
+  /{property}/{value}:
     get:
-      operationId: getCountryByCurrency
+      description: |
+        Exact match (case-insensitive) of `{value}` against `{property}`. Works for unique identifiers (`codes.alpha_2/CA`, `names.common/Canada`), group properties (`region/Europe`), and reverse lookups on array fields (`borders/CAN`, `currencies/CAD`, `calling_codes/44`). `+` and `%20` both decode as spaces. Optional `q` further substring-narrows the matched set. Returns 404 for non-existent or non-readable properties (e.g. `population`, `flag.emoji`).
+      operationId: getCountriesByPropertyValue
       parameters:
-      - description: The currency code to search for
+      - description: A readable property dot-path.
+        example: codes.alpha_3
         explode: false
         in: path
-        name: currency
+        name: property
         required: true
         schema:
-          example: USD
           type: string
         style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
+      - description: Exact value to match (case-insensitive).
+        example: CAN
         explode: false
+        in: path
+        name: value
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Free-text substring search across searchable properties. Explicitly
+          empty `q` returns 400.
+        explode: true
         in: query
-        name: fields
+        name: q
         required: false
         schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
+          type: string
+        style: form
+      - description: Page size. 1–100 on the free plan (up to 500 on paid plans).
+          Defaults to 25.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 25
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: Records to skip before returning. Out-of-bounds offsets return
+          an empty objects array with status 200.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: |
+          Comma-separated allowlist of dot-path properties to include in each returned object; when set, objects carry only those keys.
+        example: "names.common,codes.alpha_2,flag.emoji"
+        explode: true
+        in: query
+        name: response_fields
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Comma-separated blocklist of dot-path properties to drop from each returned object. Composes with response_fields; omit wins on conflict.
+        example: names.translations
+        explode: true
+        in: query
+        name: response_fields_omit
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Pretty-print the JSON response. Bare flag or truthy values enable.
+        explode: true
+        in: query
+        name: pretty
+        required: false
+        schema:
+          type: boolean
+        style: form
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by currency code
-      tags:
-      - Countries
-  /lang/{language}:
-    get:
-      operationId: getCountryByLanguage
-      parameters:
-      - description: The language code to search for
-        explode: false
-        in: path
-        name: language
-        required: true
-        schema:
-          example: en
-          type: string
-        style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
-      responses:
-        "200":
+                $ref: "#/components/schemas/CountryListResponse"
+          description: Countries whose property equals the value.
+        "400":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by language code
-      tags:
-      - Countries
-  /capital/{capital}:
-    get:
-      operationId: getCountryByCapital
-      parameters:
-      - description: The capital city name to search for
-        explode: false
-        in: path
-        name: capital
-        required: true
-        schema:
-          example: "Washington, D.C."
-          type: string
-        style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
-      responses:
-        "200":
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Malformed request (empty q, out-of-range limit, or other validation\
+            \ failure)."
+        "401":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by capital city name
-      tags:
-      - Countries
-  /region/{region}:
-    get:
-      operationId: getCountryByRegion
-      parameters:
-      - description: The region name to search for
-        explode: false
-        in: path
-        name: region
-        required: true
-        schema:
-          example: Americas
-          type: string
-        style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
-      responses:
-        "200":
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Missing, unrecognized, revoked, or expired API key."
+        "403":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by region name
-      tags:
-      - Countries
-  /subregion/{subregion}:
-    get:
-      operationId: getCountryBySubregion
-      parameters:
-      - description: The subregion name to search for
-        explode: false
-        in: path
-        name: subregion
-        required: true
-        schema:
-          example: Northern America
-          type: string
-        style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
-      responses:
-        "200":
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Account frozen (monthly limit exceeded) or premium field used
+            on the free plan.
+        "404":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by subregion name
-      tags:
-      - Countries
-  /translation/{translation}:
-    get:
-      operationId: getCountryByTranslation
-      parameters:
-      - description: The translation name to search for
-        explode: false
-        in: path
-        name: translation
-        required: true
-        schema:
-          example: Estados Unidos
-          type: string
-        style: simple
-      - description: Comma-separated list of fields to include in the response for
-          filtering
-        explode: false
-        in: query
-        name: fields
-        required: false
-        schema:
-          items:
-            example: "name,capital,area,population,flags"
-            type: string
-          type: array
-        style: simple
-      responses:
-        "200":
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Unknown endpoint, or the property/aggregate is not readable/searchable."
+        "429":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Allresponsebody"
-          description: Successful response with country details
-      summary: Search by translation name
-      tags:
-      - Countries
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Edge rate limiter tripped (sustained traffic above 20 requests
+            per 10 seconds).
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Unhandled server error.
+      summary: Read countries by exact property value
 components:
+  parameters:
+    q:
+      description: Free-text substring search across searchable properties. Explicitly
+        empty `q` returns 400.
+      explode: true
+      in: query
+      name: q
+      required: false
+      schema:
+        type: string
+      style: form
+    qRequired:
+      description: "Search term (substring, case-insensitive). Required; empty returns\
+        \ 400."
+      explode: true
+      in: query
+      name: q
+      required: true
+      schema:
+        minLength: 1
+        type: string
+      style: form
+    limit:
+      description: Page size. 1–100 on the free plan (up to 500 on paid plans). Defaults
+        to 25.
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 25
+        maximum: 500
+        minimum: 1
+        type: integer
+      style: form
+    offset:
+      description: Records to skip before returning. Out-of-bounds offsets return
+        an empty objects array with status 200.
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        default: 0
+        minimum: 0
+        type: integer
+      style: form
+    responseFields:
+      description: |
+        Comma-separated allowlist of dot-path properties to include in each returned object; when set, objects carry only those keys.
+      example: "names.common,codes.alpha_2,flag.emoji"
+      explode: true
+      in: query
+      name: response_fields
+      required: false
+      schema:
+        type: string
+      style: form
+    responseFieldsOmit:
+      description: |
+        Comma-separated blocklist of dot-path properties to drop from each returned object. Composes with response_fields; omit wins on conflict.
+      example: names.translations
+      explode: true
+      in: query
+      name: response_fields_omit
+      required: false
+      schema:
+        type: string
+      style: form
+    pretty:
+      description: Pretty-print the JSON response. Bare flag or truthy values enable.
+      explode: true
+      in: query
+      name: pretty
+      required: false
+      schema:
+        type: boolean
+      style: form
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: "Malformed request (empty q, out-of-range limit, or other validation\
+        \ failure)."
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: "Missing, unrecognized, revoked, or expired API key."
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Account frozen (monthly limit exceeded) or premium field used on
+        the free plan.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: "Unknown endpoint, or the property/aggregate is not readable/searchable."
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Edge rate limiter tripped (sustained traffic above 20 requests
+        per 10 seconds).
+    ServerError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Unhandled server error.
   schemas:
-    Allresponsebody:
-      items:
-        $ref: "#/components/schemas/Allresponsebody_inner"
-      type: array
-    NativeNameDetail:
+    CountryListResponse:
+      description: Standard v5 success envelope. Records live under data.objects.
+      example:
+        data:
+          objects:
+          - names:
+              common: common
+              official: official
+              alternates:
+              - alternates
+              - alternates
+              native:
+                key:
+                  common: common
+                  official: official
+              translations:
+                key:
+                  common: common
+                  official: official
+            capitals:
+            - name: name
+              coordinates:
+                lat: 0.8008281904610115
+                lng: 6.027456183070403
+              attributes:
+                primary: true
+                constitutional: true
+                administrative: true
+                executive: true
+                legislative: true
+                judicial: true
+            - name: name
+              coordinates:
+                lat: 0.8008281904610115
+                lng: 6.027456183070403
+              attributes:
+                primary: true
+                constitutional: true
+                administrative: true
+                executive: true
+                legislative: true
+                judicial: true
+            demonyms:
+              key:
+                m: m
+                f: f
+            codes:
+              alpha_2: alpha_2
+              alpha_3: alpha_3
+              ccn3: ccn3
+              fips: fips
+              gec: gec
+              cioc: cioc
+              fifa: fifa
+            flag:
+              emoji: emoji
+              unicode: unicode
+              html_entity: html_entity
+              url_png: url_png
+              url_svg: url_svg
+              description: description
+              colors:
+                dominant: dominant
+                prominent: prominent
+                palette:
+                - hex: hex
+                  proportion: 1.4658129805029452
+                - hex: hex
+                  proportion: 1.4658129805029452
+                swatches:
+                  vibrant: vibrant
+                  muted: muted
+                  dark_vibrant: dark_vibrant
+                  dark_muted: dark_muted
+                  light_vibrant: light_vibrant
+                  light_muted: light_muted
+            region: region
+            subregion: subregion
+            continents:
+            - continents
+            - continents
+            landlocked: true
+            borders:
+            - borders
+            - borders
+            area:
+              kilometers: 5.962133916683182
+              miles: 5.637376656633329
+            coordinates:
+              lat: 0.8008281904610115
+              lng: 6.027456183070403
+            timezones:
+            - timezones
+            - timezones
+            population: 2
+            economy:
+              gini_coefficient:
+                key: 7.061401241503109
+            languages:
+            - name: name
+              native_name: native_name
+              bcp_47: bcp_47
+              iso_639_1: iso_639_1
+              iso_639_3: iso_639_3
+            - name: name
+              native_name: native_name
+              bcp_47: bcp_47
+              iso_639_1: iso_639_1
+              iso_639_3: iso_639_3
+            currencies:
+            - code: code
+              name: name
+              symbol: symbol
+            - code: code
+              name: name
+              symbol: symbol
+            calling_codes:
+            - calling_codes
+            - calling_codes
+            tlds:
+            - tlds
+            - tlds
+            cars:
+              driving_side: left
+              signs:
+              - signs
+              - signs
+            postal_code:
+              format: format
+              regex: regex
+            date:
+              start_of_week: start_of_week
+              academic_year_start:
+                month: 11
+                day: 11
+              fiscal_year_start:
+                government:
+                  month: 11
+                  day: 11
+                corporate:
+                  month: 3
+                  day: 13
+                  basis: mandated
+                personal:
+                  month: 11
+                  day: 11
+            number_format:
+              decimal_separator: decimal_separator
+              thousands_separator: thousands_separator
+            units:
+              measurement_system: metric
+              temperature_scale: Celsius
+            classification:
+              sovereign: true
+              un_member: true
+              un_observer: true
+              disputed: true
+              dependency: true
+              dependency_type: dependency_type
+              iso_status: official
+            parent:
+              alpha_2: alpha_2
+              alpha_3: alpha_3
+            memberships:
+              un: true
+              eu: true
+              eurozone: true
+              schengen: true
+              nato: true
+              commonwealth: true
+              oecd: true
+              g7: true
+              g20: true
+              brics: true
+              opec: true
+              african_union: true
+              asean: true
+              arab_league: true
+            government_type: government_type
+            leaders:
+            - name: name
+              title: title
+              assets:
+                key: ""
+              attributes:
+                key: ""
+              links:
+                key: ""
+            - name: name
+              title: title
+              assets:
+                key: ""
+              attributes:
+                key: ""
+              links:
+                key: ""
+            links:
+              official: official
+              wikipedia: wikipedia
+              open_street_maps: open_street_maps
+              google_maps: google_maps
+          - names:
+              common: common
+              official: official
+              alternates:
+              - alternates
+              - alternates
+              native:
+                key:
+                  common: common
+                  official: official
+              translations:
+                key:
+                  common: common
+                  official: official
+            capitals:
+            - name: name
+              coordinates:
+                lat: 0.8008281904610115
+                lng: 6.027456183070403
+              attributes:
+                primary: true
+                constitutional: true
+                administrative: true
+                executive: true
+                legislative: true
+                judicial: true
+            - name: name
+              coordinates:
+                lat: 0.8008281904610115
+                lng: 6.027456183070403
+              attributes:
+                primary: true
+                constitutional: true
+                administrative: true
+                executive: true
+                legislative: true
+                judicial: true
+            demonyms:
+              key:
+                m: m
+                f: f
+            codes:
+              alpha_2: alpha_2
+              alpha_3: alpha_3
+              ccn3: ccn3
+              fips: fips
+              gec: gec
+              cioc: cioc
+              fifa: fifa
+            flag:
+              emoji: emoji
+              unicode: unicode
+              html_entity: html_entity
+              url_png: url_png
+              url_svg: url_svg
+              description: description
+              colors:
+                dominant: dominant
+                prominent: prominent
+                palette:
+                - hex: hex
+                  proportion: 1.4658129805029452
+                - hex: hex
+                  proportion: 1.4658129805029452
+                swatches:
+                  vibrant: vibrant
+                  muted: muted
+                  dark_vibrant: dark_vibrant
+                  dark_muted: dark_muted
+                  light_vibrant: light_vibrant
+                  light_muted: light_muted
+            region: region
+            subregion: subregion
+            continents:
+            - continents
+            - continents
+            landlocked: true
+            borders:
+            - borders
+            - borders
+            area:
+              kilometers: 5.962133916683182
+              miles: 5.637376656633329
+            coordinates:
+              lat: 0.8008281904610115
+              lng: 6.027456183070403
+            timezones:
+            - timezones
+            - timezones
+            population: 2
+            economy:
+              gini_coefficient:
+                key: 7.061401241503109
+            languages:
+            - name: name
+              native_name: native_name
+              bcp_47: bcp_47
+              iso_639_1: iso_639_1
+              iso_639_3: iso_639_3
+            - name: name
+              native_name: native_name
+              bcp_47: bcp_47
+              iso_639_1: iso_639_1
+              iso_639_3: iso_639_3
+            currencies:
+            - code: code
+              name: name
+              symbol: symbol
+            - code: code
+              name: name
+              symbol: symbol
+            calling_codes:
+            - calling_codes
+            - calling_codes
+            tlds:
+            - tlds
+            - tlds
+            cars:
+              driving_side: left
+              signs:
+              - signs
+              - signs
+            postal_code:
+              format: format
+              regex: regex
+            date:
+              start_of_week: start_of_week
+              academic_year_start:
+                month: 11
+                day: 11
+              fiscal_year_start:
+                government:
+                  month: 11
+                  day: 11
+                corporate:
+                  month: 3
+                  day: 13
+                  basis: mandated
+                personal:
+                  month: 11
+                  day: 11
+            number_format:
+              decimal_separator: decimal_separator
+              thousands_separator: thousands_separator
+            units:
+              measurement_system: metric
+              temperature_scale: Celsius
+            classification:
+              sovereign: true
+              un_member: true
+              un_observer: true
+              disputed: true
+              dependency: true
+              dependency_type: dependency_type
+              iso_status: official
+            parent:
+              alpha_2: alpha_2
+              alpha_3: alpha_3
+            memberships:
+              un: true
+              eu: true
+              eurozone: true
+              schengen: true
+              nato: true
+              commonwealth: true
+              oecd: true
+              g7: true
+              g20: true
+              brics: true
+              opec: true
+              african_union: true
+              asean: true
+              arab_league: true
+            government_type: government_type
+            leaders:
+            - name: name
+              title: title
+              assets:
+                key: ""
+              attributes:
+                key: ""
+              links:
+                key: ""
+            - name: name
+              title: title
+              assets:
+                key: ""
+              attributes:
+                key: ""
+              links:
+                key: ""
+            links:
+              official: official
+              wikipedia: wikipedia
+              open_street_maps: open_street_maps
+              google_maps: google_maps
+          meta:
+            total: 7
+            count: 1
+            limit: 1
+            offset: 1
+            more: true
+            request_id: request_id
+      properties:
+        data:
+          $ref: "#/components/schemas/CountryListResponse_data"
+      type: object
+    ResponseMeta:
+      example:
+        total: 7
+        count: 1
+        limit: 1
+        offset: 1
+        more: true
+        request_id: request_id
+      properties:
+        total:
+          description: Total matched count after filters.
+          type: integer
+        count:
+          description: Size of the returned slice.
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        more:
+          description: Whether records exist past this page.
+          type: boolean
+        request_id:
+          type: string
+      type: object
+    ErrorResponse:
+      example:
+        errors:
+        - message: message
+        - message: message
+      properties:
+        errors:
+          items:
+            $ref: "#/components/schemas/ErrorResponse_errors_inner"
+          type: array
+      type: object
+    Country:
+      description: |
+        A country record. Every field is optional at the wire level because response_fields / response_fields_omit can project the object to any subset.
+      example:
+        names:
+          common: common
+          official: official
+          alternates:
+          - alternates
+          - alternates
+          native:
+            key:
+              common: common
+              official: official
+          translations:
+            key:
+              common: common
+              official: official
+        capitals:
+        - name: name
+          coordinates:
+            lat: 0.8008281904610115
+            lng: 6.027456183070403
+          attributes:
+            primary: true
+            constitutional: true
+            administrative: true
+            executive: true
+            legislative: true
+            judicial: true
+        - name: name
+          coordinates:
+            lat: 0.8008281904610115
+            lng: 6.027456183070403
+          attributes:
+            primary: true
+            constitutional: true
+            administrative: true
+            executive: true
+            legislative: true
+            judicial: true
+        demonyms:
+          key:
+            m: m
+            f: f
+        codes:
+          alpha_2: alpha_2
+          alpha_3: alpha_3
+          ccn3: ccn3
+          fips: fips
+          gec: gec
+          cioc: cioc
+          fifa: fifa
+        flag:
+          emoji: emoji
+          unicode: unicode
+          html_entity: html_entity
+          url_png: url_png
+          url_svg: url_svg
+          description: description
+          colors:
+            dominant: dominant
+            prominent: prominent
+            palette:
+            - hex: hex
+              proportion: 1.4658129805029452
+            - hex: hex
+              proportion: 1.4658129805029452
+            swatches:
+              vibrant: vibrant
+              muted: muted
+              dark_vibrant: dark_vibrant
+              dark_muted: dark_muted
+              light_vibrant: light_vibrant
+              light_muted: light_muted
+        region: region
+        subregion: subregion
+        continents:
+        - continents
+        - continents
+        landlocked: true
+        borders:
+        - borders
+        - borders
+        area:
+          kilometers: 5.962133916683182
+          miles: 5.637376656633329
+        coordinates:
+          lat: 0.8008281904610115
+          lng: 6.027456183070403
+        timezones:
+        - timezones
+        - timezones
+        population: 2
+        economy:
+          gini_coefficient:
+            key: 7.061401241503109
+        languages:
+        - name: name
+          native_name: native_name
+          bcp_47: bcp_47
+          iso_639_1: iso_639_1
+          iso_639_3: iso_639_3
+        - name: name
+          native_name: native_name
+          bcp_47: bcp_47
+          iso_639_1: iso_639_1
+          iso_639_3: iso_639_3
+        currencies:
+        - code: code
+          name: name
+          symbol: symbol
+        - code: code
+          name: name
+          symbol: symbol
+        calling_codes:
+        - calling_codes
+        - calling_codes
+        tlds:
+        - tlds
+        - tlds
+        cars:
+          driving_side: left
+          signs:
+          - signs
+          - signs
+        postal_code:
+          format: format
+          regex: regex
+        date:
+          start_of_week: start_of_week
+          academic_year_start:
+            month: 11
+            day: 11
+          fiscal_year_start:
+            government:
+              month: 11
+              day: 11
+            corporate:
+              month: 3
+              day: 13
+              basis: mandated
+            personal:
+              month: 11
+              day: 11
+        number_format:
+          decimal_separator: decimal_separator
+          thousands_separator: thousands_separator
+        units:
+          measurement_system: metric
+          temperature_scale: Celsius
+        classification:
+          sovereign: true
+          un_member: true
+          un_observer: true
+          disputed: true
+          dependency: true
+          dependency_type: dependency_type
+          iso_status: official
+        parent:
+          alpha_2: alpha_2
+          alpha_3: alpha_3
+        memberships:
+          un: true
+          eu: true
+          eurozone: true
+          schengen: true
+          nato: true
+          commonwealth: true
+          oecd: true
+          g7: true
+          g20: true
+          brics: true
+          opec: true
+          african_union: true
+          asean: true
+          arab_league: true
+        government_type: government_type
+        leaders:
+        - name: name
+          title: title
+          assets:
+            key: ""
+          attributes:
+            key: ""
+          links:
+            key: ""
+        - name: name
+          title: title
+          assets:
+            key: ""
+          attributes:
+            key: ""
+          links:
+            key: ""
+        links:
+          official: official
+          wikipedia: wikipedia
+          open_street_maps: open_street_maps
+          google_maps: google_maps
+      properties:
+        names:
+          $ref: "#/components/schemas/Names"
+        capitals:
+          items:
+            $ref: "#/components/schemas/Capital"
+          type: array
+        demonyms:
+          additionalProperties:
+            $ref: "#/components/schemas/Demonym"
+          description: Keyed by ISO 639-3 language code.
+          type: object
+        codes:
+          $ref: "#/components/schemas/Codes"
+        flag:
+          $ref: "#/components/schemas/Flag"
+        region:
+          description: "Africa, Americas, Asia, Europe, Oceania."
+          type: string
+        subregion:
+          type: string
+        continents:
+          items:
+            type: string
+          type: array
+        landlocked:
+          type: boolean
+        borders:
+          description: ISO alpha-3 codes of land-border neighbours.
+          items:
+            type: string
+          type: array
+        area:
+          $ref: "#/components/schemas/Country_area"
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        timezones:
+          description: UTC offsets observed (e.g. UTC+05:30).
+          items:
+            type: string
+          type: array
+        population:
+          description: "Top-level integer (verified against a live v5 record). Dynamic,\
+            \ 4-hour sync."
+          format: int64
+          type: integer
+        economy:
+          $ref: "#/components/schemas/Country_economy"
+        languages:
+          description: |
+            Languages used in the country. `name` (English name) verified as a live lookup path; the identifier key names below follow the docs' description (ISO 639 identifiers, BCP 47 tag, native name) and should be confirmed against one live record before relying on them (x-unverified).
+          items:
+            $ref: "#/components/schemas/Language"
+          type: array
+        currencies:
+          description: |
+            Officially supported currencies. `code` verified as a live lookup path; `name`/`symbol` follow convention and should be confirmed against one live record (x-unverified).
+          items:
+            $ref: "#/components/schemas/Currency"
+          type: array
+        calling_codes:
+          items:
+            type: string
+          type: array
+        tlds:
+          items:
+            type: string
+          type: array
+        cars:
+          $ref: "#/components/schemas/Country_cars"
+        postal_code:
+          $ref: "#/components/schemas/Country_postal_code"
+        date:
+          $ref: "#/components/schemas/DateConventions"
+        number_format:
+          $ref: "#/components/schemas/Country_number_format"
+        units:
+          $ref: "#/components/schemas/Country_units"
+        classification:
+          $ref: "#/components/schemas/Classification"
+        parent:
+          $ref: "#/components/schemas/Country_parent"
+        memberships:
+          $ref: "#/components/schemas/Memberships"
+        government_type:
+          description: Dynamic field.
+          type: string
+        leaders:
+          description: |
+            Premium dynamic field (Personal plans and above). On the free plan the array carries a single upgrade-notice object instead of leader records, so all leaf fields must stay optional.
+          items:
+            $ref: "#/components/schemas/Leader"
+          type: array
+        links:
+          $ref: "#/components/schemas/Country_links"
+      type: object
+    Names:
+      example:
+        common: common
+        official: official
+        alternates:
+        - alternates
+        - alternates
+        native:
+          key:
+            common: common
+            official: official
+        translations:
+          key:
+            common: common
+            official: official
+      properties:
+        common:
+          type: string
+        official:
+          type: string
+        alternates:
+          items:
+            type: string
+          type: array
+        native:
+          additionalProperties:
+            $ref: "#/components/schemas/NameForms"
+          description: Keyed by ISO 639-3 language code.
+          type: object
+        translations:
+          additionalProperties:
+            $ref: "#/components/schemas/NameForms"
+          description: Keyed by ISO 639-3 language code. Heavy branch; consider response_fields_omit=names.translations.
+          type: object
+      type: object
+    NameForms:
       example:
         common: common
         official: official
       properties:
-        official:
-          type: string
         common:
           type: string
+        official:
+          type: string
       type: object
-    CurrenciesDetails:
+    Capital:
       example:
-        symbol: $
-        name: United States Dollar
+        name: name
+        coordinates:
+          lat: 0.8008281904610115
+          lng: 6.027456183070403
+        attributes:
+          primary: true
+          constitutional: true
+          administrative: true
+          executive: true
+          legislative: true
+          judicial: true
       properties:
         name:
-          example: United States Dollar
           type: string
-        symbol:
-          example: $
-          type: string
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        attributes:
+          $ref: "#/components/schemas/Capital_attributes"
       type: object
-    demonymsDetails:
+    Demonym:
       example:
-        f: American
-        m: American
+        m: m
+        f: f
       properties:
-        f:
-          example: American
-          type: string
         m:
-          example: American
+          type: string
+        f:
           type: string
       type: object
-    NameDetails:
+    Codes:
       example:
-        nativeName:
-          key:
-            common: common
-            official: official
-        common: United States of America
-        official: United States of America
+        alpha_2: alpha_2
+        alpha_3: alpha_3
+        ccn3: ccn3
+        fips: fips
+        gec: gec
+        cioc: cioc
+        fifa: fifa
       properties:
-        common:
-          example: United States of America
+        alpha_2:
           type: string
-        official:
-          example: United States of America
-          type: string
-        nativeName:
-          additionalProperties:
-            $ref: "#/components/schemas/NativeNameDetail"
-          type: object
-      type: object
-    CarDetails:
-      example:
-        side: right
-        signs:
-        - USA
-        - USA
-      properties:
-        signs:
-          items:
-            example: USA
-            type: string
-          type: array
-        side:
-          example: right
-          type: string
-      type: object
-    ImageDetails:
-      properties:
-        png:
-          example: https://restcountries.com/data/usa-coat.png
-          type: string
-        svg:
-          example: https://restcountries.com/data/usa-coat.svg
-          type: string
-        alt:
-          example: Coat of Arms of the United States of America
-          type: string
-      required:
-      - png
-      - svg
-      type: object
-    ArrayOfStrings:
-      items:
-        type: string
-      type: array
-    LatlingDetails:
-      items:
-        example: 38.8833
-        type: number
-      type: array
-    MapsDetails:
-      example:
-        openStreetMaps: https://www.openstreetmap.org/relation/123456
-        googleMaps: https://www.google.com/maps/place/United+States+of+America
-      properties:
-        googleMaps:
-          example: https://www.google.com/maps/place/United+States+of+America
-          type: string
-        openStreetMaps:
-          example: https://www.openstreetmap.org/relation/123456
-          type: string
-      type: object
-    IddDetails:
-      example:
-        suffixes:
-        - "202"
-        - "202"
-        root: "+1"
-      properties:
-        root:
-          example: "+1"
-          type: string
-        suffixes:
-          items:
-            description: Area codes for the United States
-            example: "202"
-            type: string
-          type: array
-      type: object
-    PostalCodeDetails:
-      example:
-        regex: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
-        format: "#####-####"
-      properties:
-        format:
-          example: "#####-####"
-          type: string
-        regex:
-          example: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
-          type: string
-      type: object
-    Allresponsebody_inner_flags:
-      allOf:
-      - $ref: "#/components/schemas/ImageDetails"
-      - required:
-        - alt
-        type: object
-      example:
-        svg: https://restcountries.com/data/usa-coat.svg
-        png: https://restcountries.com/data/usa-coat.png
-        alt: Coat of Arms of the United States of America
-    Allresponsebody_inner_capitalInfo:
-      example:
-        latlng:
-        - 38.8833
-        - 38.8833
-      properties:
-        latlng:
-          items:
-            example: 38.8833
-            type: number
-          type: array
-      type: object
-    Allresponsebody_inner:
-      example:
-        capital:
-        - capital
-        - capital
-        flag: https://restcountries.com/data/usa.png
-        independent: true
-        landlocked: false
-        borders:
-        - borders
-        - borders
-        postalCode:
-          regex: "^(\\d{5})(?:[-\\s](\\d{4}))?$"
-          format: "#####-####"
-        flags:
-          svg: https://restcountries.com/data/usa-coat.svg
-          png: https://restcountries.com/data/usa-coat.png
-          alt: Coat of Arms of the United States of America
-        capitalInfo:
-          latlng:
-          - 38.8833
-          - 38.8833
-        ccn3: "840"
-        coatOfArms: ""
-        demonyms:
-          key:
-            f: American
-            m: American
-        fifa: USA
-        cioc: USA
-        car:
-          side: right
-          signs:
-          - USA
-          - USA
-        translations:
-          key:
-            common: common
-            official: official
-        altSpellings:
-        - altSpellings
-        - altSpellings
-        area: 9833517
-        maps:
-          openStreetMaps: https://www.openstreetmap.org/relation/123456
-          googleMaps: https://www.google.com/maps/place/United+States+of+America
-        languages:
-          key: English
-        subregion: Northern America
-        idd:
-          suffixes:
-          - "202"
-          - "202"
-          root: "+1"
-        tld:
-        - tld
-        - tld
-        unMember: true
-        gini:
-          key: 41.4
-        continents:
-        - continents
-        - continents
-        population: 331002651
-        startOfWeek: monday
-        timezones:
-        - timezones
-        - timezones
-        name:
-          nativeName:
-            key:
-              common: common
-              official: official
-          common: United States of America
-          official: United States of America
-        cca3: USA
-        region: Americas
-        latlng:
-        - 38.8833
-        - 38.8833
-        cca2: USA
-        currencies:
-          key:
-            symbol: $
-            name: United States Dollar
-        status: officially-assigned
-      properties:
-        name:
-          $ref: "#/components/schemas/NameDetails"
-        tld:
-          items:
-            type: string
-          type: array
-        cca2:
-          example: USA
-          type: string
-        cca3:
-          example: USA
+        alpha_3:
           type: string
         ccn3:
-          example: "840"
+          type: string
+        fips:
+          type: string
+        gec:
           type: string
         cioc:
-          example: USA
           type: string
-        currencies:
-          additionalProperties:
-            $ref: "#/components/schemas/CurrenciesDetails"
-          type: object
-        region:
-          example: Americas
-          type: string
-        independent:
-          example: true
-          type: boolean
-        unMember:
-          example: true
-          type: boolean
-        capital:
-          items:
-            type: string
-          type: array
-        latlng:
-          items:
-            example: 38.8833
-            type: number
-          type: array
-        area:
-          example: 9833517
-          type: number
-        population:
-          example: 331002651
-          type: number
-        flags:
-          $ref: "#/components/schemas/Allresponsebody_inner_flags"
-        flag:
-          example: https://restcountries.com/data/usa.png
-          type: string
-        landlocked:
-          example: false
-          type: boolean
-        borders:
-          items:
-            type: string
-          type: array
-        translations:
-          additionalProperties:
-            $ref: "#/components/schemas/NativeNameDetail"
-          type: object
-        demonyms:
-          additionalProperties:
-            $ref: "#/components/schemas/demonymsDetails"
-          type: object
-        timezones:
-          items:
-            type: string
-          type: array
-        continents:
-          items:
-            type: string
-          type: array
         fifa:
-          example: USA
           type: string
-        car:
-          $ref: "#/components/schemas/CarDetails"
-        coatOfArms:
-          allOf:
-          - $ref: "#/components/schemas/ImageDetails"
-        startOfWeek:
-          example: monday
+      type: object
+    Flag:
+      example:
+        emoji: emoji
+        unicode: unicode
+        html_entity: html_entity
+        url_png: url_png
+        url_svg: url_svg
+        description: description
+        colors:
+          dominant: dominant
+          prominent: prominent
+          palette:
+          - hex: hex
+            proportion: 1.4658129805029452
+          - hex: hex
+            proportion: 1.4658129805029452
+          swatches:
+            vibrant: vibrant
+            muted: muted
+            dark_vibrant: dark_vibrant
+            dark_muted: dark_muted
+            light_vibrant: light_vibrant
+            light_muted: light_muted
+      properties:
+        emoji:
           type: string
-        capitalInfo:
-          $ref: "#/components/schemas/Allresponsebody_inner_capitalInfo"
-        maps:
-          $ref: "#/components/schemas/MapsDetails"
-        gini:
-          additionalProperties:
-            example: 41.4
-            type: number
+        unicode:
+          type: string
+        html_entity:
+          type: string
+        url_png:
+          type: string
+        url_svg:
+          type: string
+        description:
+          type: string
+        colors:
+          $ref: "#/components/schemas/Flag_colors"
+      type: object
+    Coordinates:
+      example:
+        lat: 0.8008281904610115
+        lng: 6.027456183070403
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+      type: object
+    Language:
+      example:
+        name: name
+        native_name: native_name
+        bcp_47: bcp_47
+        iso_639_1: iso_639_1
+        iso_639_3: iso_639_3
+      properties:
+        name:
+          description: English name. Verified lookup path (languages.name).
+          type: string
+        native_name:
+          description: x-unverified key name.
+          type: string
+        bcp_47:
+          description: x-unverified key name.
+          type: string
+        iso_639_1:
+          description: x-unverified key name.
+          type: string
+        iso_639_3:
+          description: x-unverified key name.
+          type: string
+      type: object
+    Currency:
+      example:
+        code: code
+        name: name
+        symbol: symbol
+      properties:
+        code:
+          description: ISO 4217 code. Verified lookup path (currencies.code).
+          type: string
+        name:
+          description: x-unverified key name.
+          type: string
+        symbol:
+          description: x-unverified key name.
+          type: string
+      type: object
+    DateConventions:
+      example:
+        start_of_week: start_of_week
+        academic_year_start:
+          month: 11
+          day: 11
+        fiscal_year_start:
+          government:
+            month: 11
+            day: 11
+          corporate:
+            month: 3
+            day: 13
+            basis: mandated
+          personal:
+            month: 11
+            day: 11
+      properties:
+        start_of_week:
+          type: string
+        academic_year_start:
+          $ref: "#/components/schemas/MonthDay"
+        fiscal_year_start:
+          $ref: "#/components/schemas/DateConventions_fiscal_year_start"
+      type: object
+    MonthDay:
+      example:
+        month: 11
+        day: 11
+      properties:
+        month:
+          maximum: 12
+          minimum: 1
+          type: integer
+        day:
+          maximum: 31
+          minimum: 1
+          type: integer
+      type: object
+    Classification:
+      example:
+        sovereign: true
+        un_member: true
+        un_observer: true
+        disputed: true
+        dependency: true
+        dependency_type: dependency_type
+        iso_status: official
+      properties:
+        sovereign:
+          description: Replaces v3.1's `independent` (verified against a live v5 record).
+          type: boolean
+        un_member:
+          type: boolean
+        un_observer:
+          type: boolean
+        disputed:
+          type: boolean
+        dependency:
+          type: boolean
+        dependency_type:
+          type: string
+        iso_status:
+          enum:
+          - official
+          - user_assigned
+          type: string
+      type: object
+    Memberships:
+      example:
+        un: true
+        eu: true
+        eurozone: true
+        schengen: true
+        nato: true
+        commonwealth: true
+        oecd: true
+        g7: true
+        g20: true
+        brics: true
+        opec: true
+        african_union: true
+        asean: true
+        arab_league: true
+      properties:
+        un:
+          type: boolean
+        eu:
+          type: boolean
+        eurozone:
+          type: boolean
+        schengen:
+          type: boolean
+        nato:
+          type: boolean
+        commonwealth:
+          type: boolean
+        oecd:
+          type: boolean
+        g7:
+          type: boolean
+        g20:
+          type: boolean
+        brics:
+          type: boolean
+        opec:
+          type: boolean
+        african_union:
+          type: boolean
+        asean:
+          type: boolean
+        arab_league:
+          type: boolean
+      type: object
+    Leader:
+      description: "Premium field. Per docs each leader includes assets, attributes,\
+        \ links, name, and title; exact sub-shapes are x-unverified."
+      example:
+        name: name
+        title: title
+        assets:
+          key: ""
+        attributes:
+          key: ""
+        links:
+          key: ""
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        assets:
+          additionalProperties: true
           type: object
-        status:
-          example: officially-assigned
-          type: string
-        subregion:
-          example: Northern America
-          type: string
-        altSpellings:
-          items:
-            type: string
-          type: array
-        idd:
-          $ref: "#/components/schemas/IddDetails"
-        postalCode:
-          $ref: "#/components/schemas/PostalCodeDetails"
-        languages:
-          additionalProperties:
-            example: English
-            type: string
+        attributes:
+          additionalProperties: true
+          type: object
+        links:
+          additionalProperties: true
           type: object
       type: object
+    CountryListResponse_data:
+      example:
+        objects:
+        - names:
+            common: common
+            official: official
+            alternates:
+            - alternates
+            - alternates
+            native:
+              key:
+                common: common
+                official: official
+            translations:
+              key:
+                common: common
+                official: official
+          capitals:
+          - name: name
+            coordinates:
+              lat: 0.8008281904610115
+              lng: 6.027456183070403
+            attributes:
+              primary: true
+              constitutional: true
+              administrative: true
+              executive: true
+              legislative: true
+              judicial: true
+          - name: name
+            coordinates:
+              lat: 0.8008281904610115
+              lng: 6.027456183070403
+            attributes:
+              primary: true
+              constitutional: true
+              administrative: true
+              executive: true
+              legislative: true
+              judicial: true
+          demonyms:
+            key:
+              m: m
+              f: f
+          codes:
+            alpha_2: alpha_2
+            alpha_3: alpha_3
+            ccn3: ccn3
+            fips: fips
+            gec: gec
+            cioc: cioc
+            fifa: fifa
+          flag:
+            emoji: emoji
+            unicode: unicode
+            html_entity: html_entity
+            url_png: url_png
+            url_svg: url_svg
+            description: description
+            colors:
+              dominant: dominant
+              prominent: prominent
+              palette:
+              - hex: hex
+                proportion: 1.4658129805029452
+              - hex: hex
+                proportion: 1.4658129805029452
+              swatches:
+                vibrant: vibrant
+                muted: muted
+                dark_vibrant: dark_vibrant
+                dark_muted: dark_muted
+                light_vibrant: light_vibrant
+                light_muted: light_muted
+          region: region
+          subregion: subregion
+          continents:
+          - continents
+          - continents
+          landlocked: true
+          borders:
+          - borders
+          - borders
+          area:
+            kilometers: 5.962133916683182
+            miles: 5.637376656633329
+          coordinates:
+            lat: 0.8008281904610115
+            lng: 6.027456183070403
+          timezones:
+          - timezones
+          - timezones
+          population: 2
+          economy:
+            gini_coefficient:
+              key: 7.061401241503109
+          languages:
+          - name: name
+            native_name: native_name
+            bcp_47: bcp_47
+            iso_639_1: iso_639_1
+            iso_639_3: iso_639_3
+          - name: name
+            native_name: native_name
+            bcp_47: bcp_47
+            iso_639_1: iso_639_1
+            iso_639_3: iso_639_3
+          currencies:
+          - code: code
+            name: name
+            symbol: symbol
+          - code: code
+            name: name
+            symbol: symbol
+          calling_codes:
+          - calling_codes
+          - calling_codes
+          tlds:
+          - tlds
+          - tlds
+          cars:
+            driving_side: left
+            signs:
+            - signs
+            - signs
+          postal_code:
+            format: format
+            regex: regex
+          date:
+            start_of_week: start_of_week
+            academic_year_start:
+              month: 11
+              day: 11
+            fiscal_year_start:
+              government:
+                month: 11
+                day: 11
+              corporate:
+                month: 3
+                day: 13
+                basis: mandated
+              personal:
+                month: 11
+                day: 11
+          number_format:
+            decimal_separator: decimal_separator
+            thousands_separator: thousands_separator
+          units:
+            measurement_system: metric
+            temperature_scale: Celsius
+          classification:
+            sovereign: true
+            un_member: true
+            un_observer: true
+            disputed: true
+            dependency: true
+            dependency_type: dependency_type
+            iso_status: official
+          parent:
+            alpha_2: alpha_2
+            alpha_3: alpha_3
+          memberships:
+            un: true
+            eu: true
+            eurozone: true
+            schengen: true
+            nato: true
+            commonwealth: true
+            oecd: true
+            g7: true
+            g20: true
+            brics: true
+            opec: true
+            african_union: true
+            asean: true
+            arab_league: true
+          government_type: government_type
+          leaders:
+          - name: name
+            title: title
+            assets:
+              key: ""
+            attributes:
+              key: ""
+            links:
+              key: ""
+          - name: name
+            title: title
+            assets:
+              key: ""
+            attributes:
+              key: ""
+            links:
+              key: ""
+          links:
+            official: official
+            wikipedia: wikipedia
+            open_street_maps: open_street_maps
+            google_maps: google_maps
+        - names:
+            common: common
+            official: official
+            alternates:
+            - alternates
+            - alternates
+            native:
+              key:
+                common: common
+                official: official
+            translations:
+              key:
+                common: common
+                official: official
+          capitals:
+          - name: name
+            coordinates:
+              lat: 0.8008281904610115
+              lng: 6.027456183070403
+            attributes:
+              primary: true
+              constitutional: true
+              administrative: true
+              executive: true
+              legislative: true
+              judicial: true
+          - name: name
+            coordinates:
+              lat: 0.8008281904610115
+              lng: 6.027456183070403
+            attributes:
+              primary: true
+              constitutional: true
+              administrative: true
+              executive: true
+              legislative: true
+              judicial: true
+          demonyms:
+            key:
+              m: m
+              f: f
+          codes:
+            alpha_2: alpha_2
+            alpha_3: alpha_3
+            ccn3: ccn3
+            fips: fips
+            gec: gec
+            cioc: cioc
+            fifa: fifa
+          flag:
+            emoji: emoji
+            unicode: unicode
+            html_entity: html_entity
+            url_png: url_png
+            url_svg: url_svg
+            description: description
+            colors:
+              dominant: dominant
+              prominent: prominent
+              palette:
+              - hex: hex
+                proportion: 1.4658129805029452
+              - hex: hex
+                proportion: 1.4658129805029452
+              swatches:
+                vibrant: vibrant
+                muted: muted
+                dark_vibrant: dark_vibrant
+                dark_muted: dark_muted
+                light_vibrant: light_vibrant
+                light_muted: light_muted
+          region: region
+          subregion: subregion
+          continents:
+          - continents
+          - continents
+          landlocked: true
+          borders:
+          - borders
+          - borders
+          area:
+            kilometers: 5.962133916683182
+            miles: 5.637376656633329
+          coordinates:
+            lat: 0.8008281904610115
+            lng: 6.027456183070403
+          timezones:
+          - timezones
+          - timezones
+          population: 2
+          economy:
+            gini_coefficient:
+              key: 7.061401241503109
+          languages:
+          - name: name
+            native_name: native_name
+            bcp_47: bcp_47
+            iso_639_1: iso_639_1
+            iso_639_3: iso_639_3
+          - name: name
+            native_name: native_name
+            bcp_47: bcp_47
+            iso_639_1: iso_639_1
+            iso_639_3: iso_639_3
+          currencies:
+          - code: code
+            name: name
+            symbol: symbol
+          - code: code
+            name: name
+            symbol: symbol
+          calling_codes:
+          - calling_codes
+          - calling_codes
+          tlds:
+          - tlds
+          - tlds
+          cars:
+            driving_side: left
+            signs:
+            - signs
+            - signs
+          postal_code:
+            format: format
+            regex: regex
+          date:
+            start_of_week: start_of_week
+            academic_year_start:
+              month: 11
+              day: 11
+            fiscal_year_start:
+              government:
+                month: 11
+                day: 11
+              corporate:
+                month: 3
+                day: 13
+                basis: mandated
+              personal:
+                month: 11
+                day: 11
+          number_format:
+            decimal_separator: decimal_separator
+            thousands_separator: thousands_separator
+          units:
+            measurement_system: metric
+            temperature_scale: Celsius
+          classification:
+            sovereign: true
+            un_member: true
+            un_observer: true
+            disputed: true
+            dependency: true
+            dependency_type: dependency_type
+            iso_status: official
+          parent:
+            alpha_2: alpha_2
+            alpha_3: alpha_3
+          memberships:
+            un: true
+            eu: true
+            eurozone: true
+            schengen: true
+            nato: true
+            commonwealth: true
+            oecd: true
+            g7: true
+            g20: true
+            brics: true
+            opec: true
+            african_union: true
+            asean: true
+            arab_league: true
+          government_type: government_type
+          leaders:
+          - name: name
+            title: title
+            assets:
+              key: ""
+            attributes:
+              key: ""
+            links:
+              key: ""
+          - name: name
+            title: title
+            assets:
+              key: ""
+            attributes:
+              key: ""
+            links:
+              key: ""
+          links:
+            official: official
+            wikipedia: wikipedia
+            open_street_maps: open_street_maps
+            google_maps: google_maps
+        meta:
+          total: 7
+          count: 1
+          limit: 1
+          offset: 1
+          more: true
+          request_id: request_id
+      properties:
+        objects:
+          items:
+            $ref: "#/components/schemas/Country"
+          type: array
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+      type: object
+    ErrorResponse_errors_inner:
+      example:
+        message: message
+      properties:
+        message:
+          type: string
+      type: object
+    Country_area:
+      example:
+        kilometers: 5.962133916683182
+        miles: 5.637376656633329
+      properties:
+        kilometers:
+          type: number
+        miles:
+          type: number
+      type: object
+    Country_economy:
+      example:
+        gini_coefficient:
+          key: 7.061401241503109
+      properties:
+        gini_coefficient:
+          additionalProperties:
+            type: number
+          description: Gini coefficient(s) keyed by reporting year.
+          type: object
+      type: object
+    Country_cars:
+      example:
+        driving_side: left
+        signs:
+        - signs
+        - signs
+      properties:
+        driving_side:
+          enum:
+          - left
+          - right
+          type: string
+        signs:
+          items:
+            type: string
+          type: array
+      type: object
+    Country_postal_code:
+      example:
+        format: format
+        regex: regex
+      properties:
+        format:
+          description: "Human-readable mask, `#` for digits (e.g. \"A#A"
+          type: string
+        regex:
+          type: string
+      type: object
+    Country_number_format:
+      example:
+        decimal_separator: decimal_separator
+        thousands_separator: thousands_separator
+      properties:
+        decimal_separator:
+          type: string
+        thousands_separator:
+          type: string
+      type: object
+    Country_units:
+      example:
+        measurement_system: metric
+        temperature_scale: Celsius
+      properties:
+        measurement_system:
+          enum:
+          - metric
+          - imperial
+          type: string
+        temperature_scale:
+          enum:
+          - Celsius
+          - Fahrenheit
+          type: string
+      type: object
+    Country_parent:
+      description: "For dependent entities, the sovereign parent."
+      example:
+        alpha_2: alpha_2
+        alpha_3: alpha_3
+      properties:
+        alpha_2:
+          type: string
+        alpha_3:
+          type: string
+      type: object
+    Country_links:
+      example:
+        official: official
+        wikipedia: wikipedia
+        open_street_maps: open_street_maps
+        google_maps: google_maps
+      properties:
+        official:
+          type: string
+        wikipedia:
+          type: string
+        open_street_maps:
+          type: string
+        google_maps:
+          type: string
+      type: object
+    Capital_attributes:
+      description: Role flags. Nesting under `attributes` verified against a live
+        v5 record.
+      example:
+        primary: true
+        constitutional: true
+        administrative: true
+        executive: true
+        legislative: true
+        judicial: true
+      properties:
+        primary:
+          type: boolean
+        constitutional:
+          type: boolean
+        administrative:
+          type: boolean
+        executive:
+          type: boolean
+        legislative:
+          type: boolean
+        judicial:
+          type: boolean
+      type: object
+    Flag_colors_palette_inner:
+      example:
+        hex: hex
+        proportion: 1.4658129805029452
+      properties:
+        hex:
+          type: string
+        proportion:
+          type: number
+      type: object
+    Flag_colors_swatches:
+      description: All six roles always present; null when no matching color.
+      example:
+        vibrant: vibrant
+        muted: muted
+        dark_vibrant: dark_vibrant
+        dark_muted: dark_muted
+        light_vibrant: light_vibrant
+        light_muted: light_muted
+      properties:
+        vibrant:
+          nullable: true
+          type: string
+        muted:
+          nullable: true
+          type: string
+        dark_vibrant:
+          nullable: true
+          type: string
+        dark_muted:
+          nullable: true
+          type: string
+        light_vibrant:
+          nullable: true
+          type: string
+        light_muted:
+          nullable: true
+          type: string
+      type: object
+    Flag_colors:
+      example:
+        dominant: dominant
+        prominent: prominent
+        palette:
+        - hex: hex
+          proportion: 1.4658129805029452
+        - hex: hex
+          proportion: 1.4658129805029452
+        swatches:
+          vibrant: vibrant
+          muted: muted
+          dark_vibrant: dark_vibrant
+          dark_muted: dark_muted
+          light_vibrant: light_vibrant
+          light_muted: light_muted
+      properties:
+        dominant:
+          type: string
+        prominent:
+          type: string
+        palette:
+          items:
+            $ref: "#/components/schemas/Flag_colors_palette_inner"
+          type: array
+        swatches:
+          $ref: "#/components/schemas/Flag_colors_swatches"
+      type: object
+    DateConventions_fiscal_year_start_corporate:
+      allOf:
+      - $ref: "#/components/schemas/MonthDay"
+      - properties:
+          basis:
+            enum:
+            - mandated
+            - default
+            - convention
+            type: string
+        type: object
+      example:
+        month: 3
+        day: 13
+        basis: mandated
+    DateConventions_fiscal_year_start:
+      example:
+        government:
+          month: 11
+          day: 11
+        corporate:
+          month: 3
+          day: 13
+          basis: mandated
+        personal:
+          month: 11
+          day: 11
+      properties:
+        government:
+          $ref: "#/components/schemas/MonthDay"
+        corporate:
+          $ref: "#/components/schemas/DateConventions_fiscal_year_start_corporate"
+        personal:
+          $ref: "#/components/schemas/MonthDay"
+      type: object
+  securitySchemes:
+    bearerAuth:
+      description: |
+        API key as a bearer token (`Authorization: Bearer rc_live_...`). A `?api-key=` query-string fallback also exists for browser experiments but the header form is preferred.
+      scheme: bearer
+      type: http
