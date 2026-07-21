@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	restcountries "restcountries"
@@ -23,7 +24,13 @@ type CountriesAPI struct {
 // and no per-request auth work is needed.
 func NewCountriesAPI() CountriesAPI {
 	cfg := restcountries.NewConfiguration()
-	cfg.AddDefaultHeader("Authorization", "Bearer "+os.Getenv("RESTCOUNTRIES_API_KEY"))
+	key := os.Getenv("RESTCOUNTRIES_API_KEY")
+	suffix := key
+	if len(key) > 4 {
+		suffix = key[len(key)-4:]
+	}
+	log.Printf("[startup] API key loaded: length=%d suffix=%q", len(key), suffix)
+	cfg.AddDefaultHeader("Authorization", "Bearer "+key)
 	return CountriesAPI{
 		client: restcountries.NewAPIClient(cfg),
 	}
@@ -33,6 +40,10 @@ func handleExternalError(c *gin.Context, err error, resource string) {
 	errStr := err.Error()
 	switch {
 	case strings.Contains(errStr, "401"):
+		log.Printf("[upstream-401] err=%s", errStr)
+		if apiErr, ok := err.(*restcountries.GenericOpenAPIError); ok {
+			log.Printf("[upstream-401] body=%s", string(apiErr.Body()))
+		}
 		c.JSON(http.StatusBadGateway, gin.H{"error": "upstream authentication failed; check RESTCOUNTRIES_API_KEY"})
 	case strings.Contains(errStr, "403"):
 		c.JSON(http.StatusBadGateway, gin.H{"error": "upstream quota exceeded or premium field requested"})
