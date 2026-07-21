@@ -11,14 +11,14 @@ function App() {
   const [searchType, setSearchType] = useState('capital');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFields, setSelectedFields] = useState({
-    name: true,
-    capital: true,
+    names: true,
+    capitals: true,
     population: true,
-    flags: true,
+    flag: true,
     region: false,
     currencies: false,
     languages: false,
-    area: false
+    'area.kilometers': false
   });
   
   // Results state
@@ -195,8 +195,8 @@ function App() {
           <label className="field-container">
             <input 
               type="checkbox" 
-              checked={selectedFields.name}
-              onChange={() => handleFieldToggle('name')}
+              checked={selectedFields.names}
+              onChange={() => handleFieldToggle('names')}
             />
             <div className="switch">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -210,8 +210,8 @@ function App() {
           <label className="field-container">
             <input 
               type="checkbox" 
-              checked={selectedFields.capital}
-              onChange={() => handleFieldToggle('capital')}
+              checked={selectedFields.capitals}
+              onChange={() => handleFieldToggle('capitals')}
             />
             <div className="switch">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -241,8 +241,8 @@ function App() {
           <label className="field-container">
             <input 
               type="checkbox" 
-              checked={selectedFields.flags}
-              onChange={() => handleFieldToggle('flags')}
+              checked={selectedFields.flag}
+              onChange={() => handleFieldToggle('flag')}
             />
             <div className="switch">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -301,8 +301,8 @@ function App() {
           <label className="field-container">
             <input 
               type="checkbox" 
-              checked={selectedFields.area}
-              onChange={() => handleFieldToggle('area')}
+              checked={selectedFields['area.kilometers']}
+              onChange={() => handleFieldToggle('area.kilometers')}
             />
             <div className="switch">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -352,27 +352,27 @@ function App() {
           ))
         ) : (
           countries.map(country => (
-            <div key={country.cca3 || Math.random()} className="country-card">
-              {country.flags && (
+            <div key={country.codes?.alpha_3 || Math.random()} className="country-card">
+              {country.flag && (
                 <div className="flag-container">
-                  <img src={country.flags.png} alt={country.name?.common} className="country-flag" />
+                  <img src={country.flag.url_png} alt={country.names?.common} className="country-flag" />
                 </div>
               )}
               <div className="country-info">
                 <div className="country-header">
-                  <div className="country-name">{country.name?.common || 'Unknown'}</div>
+                  <div className="country-name">{country.names?.common || 'Unknown'}</div>
                   {country.region && (
                     <div className="country-region">
                       {country.region} {country.subregion && `· ${country.subregion}`}
-                      {country.independent && <span className="badge">Independent</span>}
+                      {country.classification?.sovereign && <span className="badge">Independent</span>}
                     </div>
                   )}
                 </div>
                 <div className="country-stats">
-                  {country.capital && (
+                  {country.capitals && (
                     <div className="stat-item">
                       <span className="stat-label">Capital</span>
-                      <span className="stat-value">{Array.isArray(country.capital) ? country.capital[0] : country.capital}</span>
+                      <span className="stat-value">{Array.isArray(country.capitals) ? country.capitals[0]?.name : country.capitals}</span>
                     </div>
                   )}
                   {country.population && (
@@ -385,7 +385,7 @@ function App() {
                     <div className="stat-item">
                       <span className="stat-label">Currency</span>
                       <span className="stat-value">
-                        {Object.values(country.currencies).map(c => `${c.symbol || ''} ${c.name}`).join(', ')}
+                        {country.currencies.map(c => `${c.symbol || ''} ${c.name}`).join(', ')}
                       </span>
                     </div>
                   )}
@@ -393,14 +393,14 @@ function App() {
                     <div className="stat-item">
                       <span className="stat-label">Languages</span>
                       <span className="stat-value">
-                        {Object.values(country.languages).join(', ')}
+                        {country.languages.map(l => l.name).join(', ')}
                       </span>
                     </div>
                   )}
-                  {country.area && (
+                  {country.area?.kilometers && (
                     <div className="stat-item">
                       <span className="stat-label">Area</span>
-                      <span className="stat-value">{country.area.toLocaleString()} km²</span>
+                      <span className="stat-value">{country.area.kilometers.toLocaleString()} km²</span>
                     </div>
                   )}
                 </div>
